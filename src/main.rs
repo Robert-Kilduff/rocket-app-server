@@ -1,20 +1,36 @@
 #[macro_use] extern crate rocket;
-use rocket::{http::Status, response::status, serde::json::{json, Value}};
+use diesel::{dsl::Limit, ExpressionMethods};
+use diesel::prelude::*;
+use rocket::{fairing, http::Status, response::status, serde::json::{json, Value}};
+use rocket_sync_db_pools::database;
+use models::User;
+use auth::BasicAuth;
+use schema::users;
+
 
 mod auth;
-use auth::BasicAuth;
+mod models;
+mod schema;
 //\
 
-//BASIC SECURITY
 
 
 
+#[database("sqlite")]
+struct DbConn(diesel::SqliteConnection);
+
+
+//Redo database.sql 
 
 //CRUD OPERATIONS {GET: list existing, GET: show single, POST: create new, PUT: update existing, DELETE: delete existing} DUMMY VALUES FOR NOW HARDCODED DUH
 
 #[get("/users")]
-fn get_users(_auth: BasicAuth) -> Value {
-    json!([{"id": 1, "name": "John Doe"}, {"id": 2, "name": "veeroni pepperoni"}])
+async fn get_users(_auth: BasicAuth, db: DbConn) -> Value {
+    db.run(|c| {
+       let users =  users::table.order(users::id.desc()).limit(1000).load::<User>(c).expect("DB ERROR");
+       json!(users)
+    }).await
+    
 }
 #[get("/users/<id>")]
 fn view_user(id: i32, _auth: BasicAuth ) -> Value {
@@ -59,6 +75,7 @@ async fn main() {
                 unauthorized,
 
             ])
+        .attach(DbConn::fairing()) //check if it can launch
         .launch()
         .await {
         println!("Failed to launch Rocket: {}", e);
