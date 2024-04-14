@@ -1,4 +1,5 @@
 #[macro_use] extern crate rocket;
+
 use diesel::{dsl::Limit, ExpressionMethods};
 use diesel::prelude::*;
 use rocket::{fairing, http::Status, response::status, serde::json::{json, Value}};
@@ -14,13 +15,10 @@ mod schema;
 //\
 
 
-
-
 #[database("sqlite")]
 struct DbConn(diesel::SqliteConnection);
 
 
-//Redo database.sql 
 
 //CRUD OPERATIONS {GET: list existing, GET: show single, POST: create new, PUT: update existing, DELETE: delete existing} DUMMY VALUES FOR NOW HARDCODED DUH
 

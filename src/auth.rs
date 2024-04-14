@@ -39,12 +39,14 @@ impl BasicAuth {
 }
 
 //guard for auth
+//curl 127.0.0.1:8000/users -H 'Authorization: Basic Zm9vOmJhcg=='
+
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for BasicAuth {
     type Error = ();
 
     async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        let auth_header = request.headers().get_one("authorization");
+        let auth_header = request.headers().get_one("Authorization");
         if let Some(auth_header) = auth_header {
             if let Some(auth) = Self::from_authorization_header(auth_header) {
                 //TODO change this auth

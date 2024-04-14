@@ -1,13 +1,12 @@
-
-use chrono::prelude::*;
 use diesel::deserialize::Queryable;
 use serde::{Serialize, Deserialize};
+use chrono::NaiveDateTime;
 
-#[derive(Serialize, Deserialize, Queryable)]
+#[derive(Serialize, Queryable)]
 pub struct User {
-    pub id: i32,
-    pub name: String,
-    pub email: String,
-    pub created_at: String,
+    id: i32,
+    name: String,
+    email: String,
+    role: Option<i32>,
+    created_at: NaiveDateTime,
 }
-
