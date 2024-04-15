@@ -1,12 +1,22 @@
-use diesel::deserialize::Queryable;
+use diesel::{deserialize::Queryable, prelude::Insertable, query_builder::AsChangeset};
 use serde::{Serialize, Deserialize};
 use chrono::NaiveDateTime;
-
-#[derive(Serialize, Queryable)]
+use crate::schema::users;
+#[derive(Serialize, Deserialize, Queryable, AsChangeset)]
 pub struct User {
+    #[serde(skip_deserializing)]
     id: i32,
-    name: String,
+    pub name: String,
+    pub email: String,
+    #[serde(skip_deserializing)]
+    role: Option<i32>,
+    #[serde(skip_deserializing)]
+    created_at: NaiveDateTime,
+}
+#[derive(Deserialize, Insertable)]
+#[diesel(table_name = users)]
+pub struct NewUser {
+    name: String, 
     email: String,
     role: Option<i32>,
-    created_at: NaiveDateTime,
 }
