@@ -11,3 +11,5 @@ base64 = "0.20"
 diesel ={ version = "2.1.5", features = ["sqlite", "r2d2", "chrono"]}
 chrono = {version = "0.4", features = ["serde"]}
 rocket_sync_db_pools ={ version = "0.1.0-rc", features = ["diesel_sqlite_pool"]}
+jsonwebtoken = "7"
+time = "0.3"
