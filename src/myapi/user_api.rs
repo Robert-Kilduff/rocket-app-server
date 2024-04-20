@@ -4,12 +4,40 @@ use diesel::ExpressionMethods;
 use diesel::prelude::*;
 use rocket::serde::json::{json, Json, Value};
 use rocket::response::status;
+use crate::auth::AuthenticatedUser;
+use crate::auth::UserAuth;
 use crate::models::{User, NewUser};
-use crate::auth::BasicAuth;
+use crate::auth::{BasicAuth, create_jwt};
 use crate::schema::users;
 use super::super::DbConn;
+use rocket::http::Status;
+//---test login and persist
 
+#[post("/login", data = "<login>")]
+pub async fn begin_auth_session(login: Json<UserAuth>, db: DbConn) -> Result<Json<rocket::serde::json::Value>, Status> {
+    let user = db.run(move |c| {
+        users::table.filter(users::name.eq(&login.username))
+        .first::<User>(c).ok()
+    }).await;
 
+    match user {
+        Some(user) if user.passhash.unwrap() == login.password => { 
+            // Create JWT 
+            match create_jwt(&user.id, user.role) {
+                Ok(token) => Ok(json!({"token": token})),
+                Err(_) => Err(Status::InternalServerError),
+            }
+        },
+        _ => Err(Status::Unauthorized),
+    }
+}
+
+#[get("/testJWT")]
+pub async fn test_jwt(_auth: AuthenticatedUser) -> Value {
+    json!("this statement authenticated")
+}
+
+//---test
 #[get("/users")]
 pub async fn get_users(_auth: BasicAuth, db: DbConn) -> Value {
     db.run(|c| {

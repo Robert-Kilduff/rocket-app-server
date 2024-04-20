@@ -24,8 +24,8 @@ diesel::table! {
         name -> Text,
         created_at -> Timestamp,
         completed_at -> Nullable<Timestamp>,
-        is_completed -> Bool,
-        complexity -> Integer,
+        is_completed -> Nullable<Bool>,
+        complexity -> Nullable<Integer>,
     }
 }
 
@@ -34,7 +34,8 @@ diesel::table! {
         id -> Integer,
         name -> Text,
         email -> Text,
-        role -> Nullable<Integer>,
+        passhash -> Nullable<Text>,
+        role -> Integer,
         created_at -> Timestamp,
     }
 }
