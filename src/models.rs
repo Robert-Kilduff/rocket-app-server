@@ -9,7 +9,7 @@ pub struct User {
     pub name: String,
     pub email: String,
     #[serde(skip_deserializing)]
-    pub passhash: Option<String>,
+    pub passhash: String,
     #[serde(skip_deserializing)]
     pub role: i32,
     #[serde(skip_deserializing)]
@@ -18,7 +18,8 @@ pub struct User {
 #[derive(Deserialize, Insertable)]
 #[diesel(table_name = users)]
 pub struct NewUser {
-    name: String, 
-    email: String,
-    role: Option<i32>,
+    pub name: String, 
+    pub email: String,
+    pub role: Option<i32>,
+    pub passhash: String,
 }

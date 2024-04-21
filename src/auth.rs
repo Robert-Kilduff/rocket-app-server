@@ -3,8 +3,19 @@ use rocket::http::Status;
 
 use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey};
 use serde::{Serialize, Deserialize};
+use serde_json::json;
 use std::env;
+use bcrypt::{hash,DEFAULT_COST};
 
+use crate::models::NewUser;
+
+//encrypt & build json fn
+impl NewUser {
+    pub fn hashgen(&mut self) {
+        self.passhash = hash(&self.passhash, DEFAULT_COST).expect("PROBLEM HASHING PASSWORD");
+
+    }
+}
 
 //start of JWT implementation
 #[derive(Debug, Serialize, Deserialize)]

@@ -34,7 +34,7 @@ diesel::table! {
         id -> Integer,
         name -> Text,
         email -> Text,
-        passhash -> Nullable<Text>,
+        passhash -> Text,
         role -> Integer,
         created_at -> Timestamp,
     }
