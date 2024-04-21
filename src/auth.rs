@@ -3,8 +3,19 @@ use rocket::http::Status;
 
 use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey};
 use serde::{Serialize, Deserialize};
+use serde_json::json;
 use std::env;
+use bcrypt::{hash,DEFAULT_COST};
 
+use crate::models::NewUser;
+
+//encrypt & build json fn
+impl NewUser {
+    pub fn hashgen(&mut self) {
+        self.passhash = hash(&self.passhash, DEFAULT_COST).expect("PROBLEM HASHING PASSWORD");
+
+    }
+}
 
 //start of JWT implementation
 #[derive(Debug, Serialize, Deserialize)]
@@ -19,6 +30,15 @@ pub struct AuthenticatedUser {
     pub user_id: i32, 
     pub role: i32,     
 }
+
+//LOGIN
+#[derive(Debug, Deserialize)]
+pub struct UserAuth {
+    pub username: String,
+    pub password: String,
+}
+
+
 //TODO test with new endpoint, define results via id and role.
 
 
@@ -50,14 +70,14 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
 }
 
 
-fn create_jwt(id: &i32, role: i32) -> Result<String, jsonwebtoken::errors::Error> {
+pub fn create_jwt(id: &i32, role: i32) -> Result<String, jsonwebtoken::errors::Error> {
     let expiration = (chrono::Utc::now() + chrono::Duration::minutes(20)).timestamp() as usize;
     let claims = Claims { subject: id.to_owned(), iat: chrono::Utc::now().timestamp() as usize, role: role.to_owned(), exp: expiration };
     let secret_key = env::var("JWT_SECRET_KEY").expect("JWT_SECRET_KEY must be set");
     encode(&Header::new(jsonwebtoken::Algorithm::HS256), &claims, &EncodingKey::from_secret(secret_key.as_bytes()))
 }
 
-fn validate_jwt(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
+pub fn validate_jwt(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
     let secret_key = env::var("SECRET_KEY").expect("SECRET_KEY must be set");
     decode::<Claims>(token, &DecodingKey::from_secret(secret_key.as_bytes()), &Validation::default())
         .map(|data| data.claims)

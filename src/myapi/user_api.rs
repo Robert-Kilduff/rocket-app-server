@@ -1,15 +1,48 @@
 
 
+use bcrypt::hash;
 use diesel::ExpressionMethods;
 use diesel::prelude::*;
 use rocket::serde::json::{json, Json, Value};
 use rocket::response::status;
+use crate::auth::AuthenticatedUser;
+use crate::auth::UserAuth;
 use crate::models::{User, NewUser};
-use crate::auth::BasicAuth;
+use crate::auth::{BasicAuth, create_jwt};
 use crate::schema::users;
 use super::super::DbConn;
+use rocket::http::Status;
+use bcrypt::{verify, DEFAULT_COST};
 
+//---test login and persist
 
+#[post("/login", data = "<login>")]
+pub async fn begin_auth_session(login: Json<UserAuth>, db: DbConn) -> Result<rocket::serde::json::Json<rocket::serde::json::Value>, Status> {
+    let username = login.username.clone();
+    let password = login.password.clone();
+    let user = db.run(move |c| {
+        users::table.filter(users::name.eq(username))
+        .first::<User>(c).ok()
+    }).await;
+
+    match user {
+        Some(user) if verify(&password, &user.passhash).unwrap_or(false) => { 
+            // Create JWT 
+            match create_jwt(&user.id, user.role) {
+                Ok(token) => Ok(rocket::serde::json::Json(json!({"token": token}))),
+                Err(_) => Err(Status::InternalServerError),
+            }
+        },
+        _ => Err(Status::Unauthorized),
+    }
+}
+
+#[get("/testJWT")]
+pub async fn test_jwt(_auth: AuthenticatedUser) -> Value {
+    json!("this statement authenticated")
+}
+
+//---test
 #[get("/users")]
 pub async fn get_users(_auth: BasicAuth, db: DbConn) -> Value {
     db.run(|c| {
@@ -32,10 +65,11 @@ pub async fn view_user(id: i32, _auth: BasicAuth , db: DbConn) -> Value {
 }
 
 #[post("/users", format = "json", data = "<new_user>")]
-pub async fn create_user(_auth: BasicAuth, db: DbConn, new_user: Json<NewUser>) -> Value {
-    db.run(|c| {
+pub async fn create_user(_auth: BasicAuth, db: DbConn, mut new_user: Json<NewUser>) -> Value {
+    new_user.hashgen(); //more explicitly .into_inner() not mut, not &* 
+    db.run(move |c| {
         let result = diesel::insert_into(users::table)
-        .values(new_user.into_inner())
+        .values(&*new_user)
         .execute(c)
         .expect("DB ERROR INSERTING");
     json!(result)
