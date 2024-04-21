@@ -1,1 +1,9 @@
 /target
+/target 2
+**/*.rs.bk
+*.db
+*.sqlite
+*.bin
+*.exe
+*.sqlite-shm
+*.sqlite-wal
