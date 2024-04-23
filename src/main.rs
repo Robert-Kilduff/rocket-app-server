@@ -48,6 +48,8 @@ async fn main() {
             myapi::user_api::create_user,
             myapi::user_api::update_users,
             myapi::user_api::delete_users,
+            myapi::user_api::begin_auth_session,
+            myapi::user_api::test_jwt,
 
             ])
             .register("/", catchers![

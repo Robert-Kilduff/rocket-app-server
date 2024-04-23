@@ -7,3 +7,4 @@
 *.exe
 *.sqlite-shm
 *.sqlite-wal
+*.sqlite
