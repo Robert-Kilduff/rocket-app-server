@@ -3,8 +3,10 @@
 use bcrypt::hash;
 use diesel::ExpressionMethods;
 use diesel::prelude::*;
+use rocket::serde::json;
 use rocket::serde::json::{json, Json, Value};
 use rocket::response::status;
+use serde_json::json as serdejson;
 use crate::auth::AuthenticatedUser;
 use crate::auth::UserAuth;
 use crate::models::{User, NewUser};
@@ -43,62 +45,100 @@ pub async fn test_jwt(_auth: AuthenticatedUser) -> Value {
 }
 //curl -X GET "http://127.0.0.1:8000/testJWT" -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWJqZWN0Ijo0LCJpYXQiOjE3MTM3ODE2ODUsImV4cCI6MTcxMzc4Mjg4NSwicm9sZSI6Mn0.Jz1m-QDF6AfjXm3lw5Ci36-sf8o4vvA4WOnIQva248w"
 
-//---test
 #[get("/users")]
-pub async fn get_users(_auth: BasicAuth, db: DbConn) -> Value {
-    db.run(|c| {
-       let users =  users::table.order(users::id.desc())
-       .limit(1000).load::<User>(c)
-       .expect("DB ERROR");
-       json!(users)
-    }).await
-    
+pub async fn get_users(_auth: AuthenticatedUser, db: DbConn) -> Value {
+    let result = match _auth.role {
+        1 => db.run(|c| {
+            users::table.order(users::id.desc())
+                .limit(1000)
+                .load::<User>(c)
+                .map(|users| json!(users))
+                .unwrap_or_else(|_| json!({ "error": "DB ERROR" }))
+        }).await,
+        _ => json!({ "error": "Access denied" }),
+    };
+    json!(result)
 }
 
 #[get("/users/<id>")]
-pub async fn view_user(id: i32, _auth: BasicAuth , db: DbConn) -> Value {
-    db.run(move |c| {
-        let user = users::table.find(id)
-        .get_result::<User>(c)
-        .expect("DB error selecting user");
-        json!(user)
-    }).await
+pub async fn view_user(id: i32, _auth: AuthenticatedUser, db: DbConn) -> Value {
+    let result = match _auth.role {
+        1 => db.run(move |c| {
+            users::table.find(id)
+            .get_result::<User>(c)
+            .expect("DB error selecting user");
+        }).await,
+        _=> db.run(move |c| {
+            users::table.find(_auth.user_id)
+            .get_result::<User>(c)
+            .expect("DB error selecting user");
+        }).await,
+    };
+    json!(result)
+    
 }
 
 #[post("/users", format = "json", data = "<new_user>")]
-pub async fn create_user(_auth: BasicAuth, db: DbConn, mut new_user: Json<NewUser>) -> Value {
-    new_user.hashgen(); //more explicitly .into_inner() not mut, not &* 
-    db.run(move |c| {
-        let result = diesel::insert_into(users::table)
-        .values(&*new_user)
-        .execute(c)
-        .expect("DB ERROR INSERTING");
-    json!(result)
-    }).await
+pub async fn create_user(_auth: AuthenticatedUser, db: DbConn, mut new_user: Json<NewUser>) -> Value {
+    match _auth.role {
+        1 => {
+            new_user.hashgen(); //more explicitly .into_inner() not mut, not &*
+            db.run(move |c| {
+                let result = diesel::insert_into(users::table)
+                .values(&*new_user)
+                .execute(c)
+                .expect("DB ERROR INSERTING");
+            json!(result)
+            }).await
+        },
+        _=> json!({"error": "Access Denied"})
+    }
+    
+
 }
 
 #[put("/users/<id>", format = "json", data = "<user>")]
-pub async fn update_users(id: i32, _auth: BasicAuth, db: DbConn, user: Json<User>) -> Value {
-    db.run(move |c| {
-        let result = diesel::update(users::table.find(id))
-        .set((
-            users::name.eq(user.name.to_owned()),
-            users::email.eq(user.email.to_owned())
-
-        ))
-        .execute(c)
-        .expect("DB error updating user");
+pub async fn update_users(id: i32, _auth: AuthenticatedUser, db: DbConn, user: Json<User>) -> Value {
+    let result = match _auth.role {
+        1 => {
+            db.run(move |c| {
+                diesel::update(users::table.find(id))
+                .set((
+                    users::name.eq(user.name.to_owned()),
+                    users::email.eq(user.email.to_owned())
+        
+                ))
+                .execute(c)
+                .expect("DB error updating user");
+            }).await
+        },
+        _ => {
+            db.run(move |c| {
+                diesel::update(users::table.find(_auth.role))
+                .set((
+                    users::name.eq(user.name.to_owned()),
+                    users::email.eq(user.email.to_owned())
+                ))
+                .execute(c)
+                .expect("DB error updating user");
+            }).await
+        }
+    };
     json!(result)
-    }).await
+    
 }
 
 #[delete("/users/<id>")]
-pub async fn delete_users(id: i32, _auth: BasicAuth, db: DbConn) -> status::NoContent {
-    db.run(move |c|{
-        diesel::delete(users::table.find(id))
-        .execute(c)
-        .expect("DB error deleting user");
-    status::NoContent
-    }).await
-
+pub async fn delete_users(id: i32, _auth: AuthenticatedUser, db: DbConn) -> Value {
+    match _auth.role {
+        1 => {
+            db.run(move |c|{
+                diesel::delete(users::table.find(id))
+                .execute(c)
+                .expect("DB error deleting user");
+            json!({"message": "user deleted", "id": id})
+            }).await
+        },
+        _=> json!({"error": "Access Denied"})
+    }
 }

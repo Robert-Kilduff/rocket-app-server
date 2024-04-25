@@ -49,8 +49,12 @@ async fn main() {
             myapi::user_api::update_users,
             myapi::user_api::delete_users,
             myapi::user_api::begin_auth_session,
+
             myapi::user_api::test_jwt,
 
+            myapi::habit_api::get_habits,
+            myapi::habit_api::view_habit,
+            myapi::habit_api::create_habit,
             ])
             .register("/", catchers![
                 not_found,
