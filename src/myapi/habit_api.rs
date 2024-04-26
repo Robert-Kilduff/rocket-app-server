@@ -9,6 +9,8 @@ use crate::auth::BasicAuth;
 use crate::schema::habits;
 use crate::schema::habits::user_id;
 use super::super::DbConn;
+use crate::services::habit_services::{HabitService, HabitUpdateError};
+
 
 #[get("/habits")]
 pub async fn get_habits(_auth: AuthenticatedUser, db: DbConn) -> Value {
@@ -73,35 +75,62 @@ pub async fn create_habit(habit_user_id: i32, _auth: AuthenticatedUser, db: DbCo
     
 
 }
-
+//review this
 #[put("/users/<habit_user_id>/habits/<habit_id>", format = "json", data = "<habit>")]
-pub async fn update_habits(habit_user_id: i32,habit_id: i32, _auth: AuthenticatedUser, db: DbConn, habit: Json<Habit>) -> Value {
-    let result = match _auth.role {
-        1 => {
-            db.run(move |c| {
-                diesel::update(habits::table.find(habit_id)) //more efficient to filter by users first?
-                .set((
-                    habits::name.eq(habit.name.to_owned()),
-                    habits::user_id.eq(habit.user_id.to_owned())
-                    //set defaults
-                ))
-                .execute(c)
-                .expect("DB error updating habit");
-            }).await
-        },
-        _ => {
-            db.run(move |c| {
-                diesel::update(habits::table.filter(habits::user_id.eq(habit_user_id)).find(habit_id))
-                .set(
-                    habits::name.eq(habit.name.to_owned())
-                )
-                .execute(c)
-                .expect("DB error updating habit");
-                unimplemented!()
+pub async fn update_habit(habit_user_id: i32, habit_id: i32, _auth: AuthenticatedUser, db: DbConn, habit: Json<Habit>) -> Value {
 
-            }).await
-        },
-    };   
-    json!(result)
+    let result = if _auth.role == 1 {  
+        db.run(move |c| {
+            diesel::update(habits::table.filter(habits::id.eq(habit_id)))
+                .set(habits::name.eq(habit.name.to_owned()))
+                .execute(c)
+        }).await
+    } else {  
+        db.run(move |c| {
+            diesel::update(habits::table.filter(habits::id.eq(habit_id).and(habits::user_id.eq(habit_user_id))))
+                .set(habits::name.eq(habit.name.to_owned()))
+                .execute(c)
+        }).await
+    }; // some dup code here but diesel is not happy with anything cleaner.
+
+    // Handle the result
+    match result {
+        Ok(count) if count > 0 => json!({"message": "Habit updated successfully", "id": habit_id}),
+        Ok(_) => json!({"error": "No habit updated"}), //no habit, not owned
+        Err(_) => json!({"error": "Database error during update"}),
+    }
 }
 
+//-- fix of above...test & repeat.
+#[put("/users/<habit_user_id>/habits/<habit_id>", format = "json", data = "<habit>")]
+pub async fn update_habit_controller(habit_user_id: i32, habit_id: i32, _auth: AuthenticatedUser, db: DbConn, habit: Json<Habit>) -> Value {
+    let service = HabitService::new(db);
+    match service.update_habit(habit_user_id, habit_id, &_auth, &habit).await {
+        Ok(_) => json!({"message": "Habit updated successfully"}),
+        Err(e) => match e {
+            HabitUpdateError::AuthorizationError => json!({"error": "Access denied"}),
+            HabitUpdateError::DatabaseError => json!({"error": "Database error during update"}),
+            HabitUpdateError::NoHabitFound => json!({"error": "No habit updated"}),
+        },
+    }
+}
+
+
+
+//---
+
+#[delete("/users/<habit_user_id>/habits/<habit_id>")]
+pub async fn delete_habit(habit_user_id: i32, habit_id: i32, _auth: AuthenticatedUser, db: DbConn) -> Value {
+    if _auth.user_id != habit_user_id && _auth.role != 1 {
+        return json!({"error": "Access denied"});
+    }
+    let result = db.run(move |c| {
+        diesel::delete(habits::table.find(habit_id))
+            .execute(c)
+    }).await;
+
+    match result {
+        Ok(_) => json!({"message": "habit deleted", "id": habit_id}),
+        Err(_) => json!({"error": "DB error deleting habit"}),
+    }
+}

@@ -15,6 +15,7 @@ mod myapi;
 mod auth;
 mod models;
 mod schema;
+mod services;
 //\
 
 
@@ -55,6 +56,8 @@ async fn main() {
             myapi::habit_api::get_habits,
             myapi::habit_api::view_habit,
             myapi::habit_api::create_habit,
+            myapi::habit_api::update_habit,
+            myapi::habit_api::delete_habit,
             ])
             .register("/", catchers![
                 not_found,

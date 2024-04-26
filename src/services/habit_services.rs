@@ -1,0 +1,42 @@
+use super::super::DbConn;
+use crate::{auth::AuthenticatedUser, models::Habit};
+use crate::schema::habits;
+use diesel::ExpressionMethods;
+use diesel::prelude::*;
+use rocket::serde::json::{json, Json, Value};
+
+
+pub struct HabitService {
+    db: DbConn,
+}
+
+impl HabitService {
+    pub fn new(db: DbConn) -> Self {
+        HabitService { db }
+    }
+
+    pub async fn update_habit(&self, user_id: i32, habit_id: i32, auth: &AuthenticatedUser, habit: &Json<Habit>) -> Result<(), HabitUpdateError> {
+        if auth.role != 1 && auth.user_id != user_id {
+            return Err(HabitUpdateError::AuthorizationError);
+        }
+
+        let name = habit.name.to_owned();
+        let result = self.db.run(move |c| {
+            diesel::update(habits::table.filter(habits::id.eq(habit_id).and(habits::user_id.eq(user_id))))
+                .set(habits::name.eq(name))
+                .execute(c)
+        }).await;
+
+        match result {
+            Ok(count) if count > 0 => Ok(()),
+            Ok(_) => Err(HabitUpdateError::NoHabitFound),
+            Err(_) => Err(HabitUpdateError::DatabaseError),
+        }
+    }
+}
+
+pub enum HabitUpdateError {
+    AuthorizationError,
+    DatabaseError,
+    NoHabitFound,
+}
