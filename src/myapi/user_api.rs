@@ -43,7 +43,7 @@ pub async fn begin_auth_session(login: Json<UserAuth>, db: DbConn) -> Result<roc
 pub async fn test_jwt(_auth: AuthenticatedUser) -> Value {
     json!("this statement authenticated")
 }
-//curl -X GET "http://127.0.0.1:8000/testJWT" -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWJqZWN0Ijo0LCJpYXQiOjE3MTM3ODE2ODUsImV4cCI6MTcxMzc4Mjg4NSwicm9sZSI6Mn0.Jz1m-QDF6AfjXm3lw5Ci36-sf8o4vvA4WOnIQva248w"
+//curl -X GET "http://127.0.0.1:8000/testJWT" -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWJqZWN0Ijo1LCJpYXQiOjE3MTQzMDA0MTYsImV4cCI6MTcxNDMwMTYxNiwicm9sZSI6MX0.4fnX5U1uPM8Oi2Ctqe6be65sHAfknYqhf04xe7d85FE"
 
 #[get("/users")]
 pub async fn get_users(_auth: AuthenticatedUser, db: DbConn) -> Value {

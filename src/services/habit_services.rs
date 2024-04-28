@@ -1,5 +1,5 @@
 use super::super::DbConn;
-use crate::{auth::AuthenticatedUser, models::Habit};
+use crate::{auth::AuthenticatedUser, models::{Habit, HabitUpdate}};
 use crate::schema::habits;
 use diesel::ExpressionMethods;
 use diesel::prelude::*;
@@ -15,12 +15,12 @@ impl HabitService {
         HabitService { db }
     }
 
-    pub async fn update_habit(&self, user_id: i32, habit_id: i32, auth: &AuthenticatedUser, habit: &Json<Habit>) -> Result<(), HabitUpdateError> {
+    pub async fn update_habit(&self, user_id: i32, habit_id: i32, auth: &AuthenticatedUser, update_data: &Json<HabitUpdate>) -> Result<(), HabitUpdateError> {
         if auth.role != 1 && auth.user_id != user_id {
             return Err(HabitUpdateError::AuthorizationError);
         }
 
-        let name = habit.name.to_owned();
+        let name = update_data.name.to_owned().expect("Name Failure");
         let result = self.db.run(move |c| {
             diesel::update(habits::table.filter(habits::id.eq(habit_id).and(habits::user_id.eq(user_id))))
                 .set(habits::name.eq(name))

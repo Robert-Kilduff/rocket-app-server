@@ -4,6 +4,7 @@ use rocket::serde::json::{json, Json, Value};
 use rocket::response::status;
 //use serde_json::json;
 use crate::auth::AuthenticatedUser;
+use crate::models::HabitUpdate;
 use crate::models::{User, Habit, NewHabit};
 use crate::auth::BasicAuth;
 use crate::schema::habits;
@@ -14,25 +15,28 @@ use crate::services::habit_services::{HabitService, HabitUpdateError};
 
 #[get("/habits")]
 pub async fn get_habits(_auth: AuthenticatedUser, db: DbConn) -> Value {
-    let result = match _auth.role {
-        1 => {
-            db.run(|c| {
-                habits::table.order(habits::id.desc())
-                .limit(1000).load::<Habit>(c)
-                .expect("DB ERROR");
-             }).await
+    let query_result = db.run(|c| {
+        habits::table
+            .order(habits::id.desc())
+            .limit(1000)
+            .load::<Habit>(c)
+    }).await;
+
+    match query_result {
+        Ok(habits) => {
+            if habits.is_empty() {
+                json!({"error": "No habits found"})
+            } else {
+                json!(habits)
+            }
         },
-        _=> {
-            db.run(|c| {
-                habits::table.order(habits::id.desc())
-                .limit(1000).load::<Habit>(c)
-                .expect("DB ERROR");
-             }).await
+        Err(e) => {
+            eprintln!("Failed to fetch habits: {}", e);
+            json!({"error": "Database error"})
         }
-    };
-    json!(result)
-    
+    }
 }
+
 
 //TODO security in architecture here?
 #[get("/users/<habit_user_id>/habits/<habit_id>")]
@@ -56,7 +60,7 @@ pub async fn view_habit(habit_user_id: i32, habit_id: i32, _auth: AuthenticatedU
     json!(result)
     
 }
-
+//handle habit_id input properlyy
 #[post("/users/<habit_user_id>/habits", format = "json", data = "<new_habit>")]
 pub async fn create_habit(habit_user_id: i32, _auth: AuthenticatedUser, db: DbConn, mut new_habit: Json<NewHabit>) -> Value {
     match _auth.role {
@@ -102,8 +106,8 @@ pub async fn update_habit(habit_user_id: i32, habit_id: i32, _auth: Authenticate
 }
 
 //-- fix of above...test & repeat.
-#[put("/users/<habit_user_id>/habits/<habit_id>", format = "json", data = "<habit>")]
-pub async fn update_habit_controller(habit_user_id: i32, habit_id: i32, _auth: AuthenticatedUser, db: DbConn, habit: Json<Habit>) -> Value {
+#[put("/users/test/<habit_user_id>/habits/<habit_id>", format = "json", data = "<habit>")]
+pub async fn update_habit_controller(habit_user_id: i32, habit_id: i32, _auth: AuthenticatedUser, db: DbConn, habit: Json<HabitUpdate>) -> Value {
     let service = HabitService::new(db);
     match service.update_habit(habit_user_id, habit_id, &_auth, &habit).await {
         Ok(_) => json!({"message": "Habit updated successfully"}),

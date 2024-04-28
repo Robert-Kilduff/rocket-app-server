@@ -37,3 +37,9 @@ pub struct NewHabit {
     pub user_id: i32,
     pub name: String, 
 }
+
+#[derive(Deserialize)]
+pub struct HabitUpdate {
+    pub name: Option<String>,
+    pub user_id: Option<i32>,  // Only admin
+}

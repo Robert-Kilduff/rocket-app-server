@@ -8,3 +8,8 @@
 *.sqlite-shm
 *.sqlite-wal
 *.sqlite
+/myapi/py_tests/*.ipynb
+/myapi/py_tests/__pycache__
+src/myapi/py_tests/__pycache__/server_call_tests.cpython-312.pyc
+src/myapi/py_tests/test_env.ipynb
+database.sqlite
