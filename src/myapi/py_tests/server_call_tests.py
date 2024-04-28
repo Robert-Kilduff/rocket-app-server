@@ -6,14 +6,15 @@ import json
 base_url = "http://127.0.0.1:8000/"
 
 
-def login(admin: True):
+def login(admin = True):
     if admin:
         data = json.dumps({
             "username": "admin",
             "password": "admin"
         })
+        print(data)
     else:
-        pass
+        print("py login error")
     url = base_url+"login"
     response = requests.post(url, data= data)
     return response.json()['token']
@@ -29,9 +30,11 @@ def get_habits():
 
 def get_users():
     url = base_url+"users"
-    token = login(admin=1)
+    token = login(admin=True)
+    print(token)
     base_headers = {}
     base_headers['Authorization']= f"Bearer {token}"
+    print(base_headers)
     response = requests.get(url, headers = base_headers)
     print(response.json())
     
@@ -54,7 +57,7 @@ def update_habit(habit_user_id, habit_id, new_name):
     base_headers = {}
     base_headers['Authorization']= f"Bearer {token}"
     base_headers["content-type"] = "application/json"
-    url = base_url+f"users/test/{habit_user_id}/habits/{habit_id}"
+    url = base_url+f"users/{habit_user_id}/habits/{habit_id}"
     #data = {}
     #data["user_id"] = habit_user_id
     #data["name"] = new_name

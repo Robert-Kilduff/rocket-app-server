@@ -1,20 +1,17 @@
 
 
-use bcrypt::hash;
+
 use diesel::ExpressionMethods;
 use diesel::prelude::*;
-use rocket::serde::json;
 use rocket::serde::json::{json, Json, Value};
-use rocket::response::status;
-use serde_json::json as serdejson;
 use crate::auth::AuthenticatedUser;
 use crate::auth::UserAuth;
 use crate::models::{User, NewUser};
-use crate::auth::{BasicAuth, create_jwt};
+use crate::auth::create_jwt;
 use crate::schema::users;
 use super::super::DbConn;
 use rocket::http::Status;
-use bcrypt::{verify, DEFAULT_COST};
+use bcrypt::verify;
 
 //---test login and persist
 // curl 127.0.0.1:8000/login -d '{"username": "HELPME", "password": "password"}' 'Content-type: application/json' -X POST 
@@ -79,8 +76,8 @@ pub async fn view_user(id: i32, _auth: AuthenticatedUser, db: DbConn) -> Value {
 }
 
 #[post("/users", format = "json", data = "<new_user>")]
-pub async fn create_user(_auth: AuthenticatedUser, db: DbConn, mut new_user: Json<NewUser>) -> Value {
-    match _auth.role {
+pub async fn create_user(auth: AuthenticatedUser, db: DbConn, mut new_user: Json<NewUser>) -> Value {
+    match auth.role {
         1 => {
             new_user.hashgen(); //more explicitly .into_inner() not mut, not &*
             db.run(move |c| {
@@ -97,9 +94,10 @@ pub async fn create_user(_auth: AuthenticatedUser, db: DbConn, mut new_user: Jso
 
 }
 
+
 #[put("/users/<id>", format = "json", data = "<user>")]
-pub async fn update_users(id: i32, _auth: AuthenticatedUser, db: DbConn, user: Json<User>) -> Value {
-    let result = match _auth.role {
+pub async fn update_users(id: i32, auth: AuthenticatedUser, db: DbConn, user: Json<User>) -> Value {
+    let result = match auth.role {
         1 => {
             db.run(move |c| {
                 diesel::update(users::table.find(id))
@@ -114,7 +112,7 @@ pub async fn update_users(id: i32, _auth: AuthenticatedUser, db: DbConn, user: J
         },
         _ => {
             db.run(move |c| {
-                diesel::update(users::table.find(_auth.role))
+                diesel::update(users::table.find(auth.role))
                 .set((
                     users::name.eq(user.name.to_owned()),
                     users::email.eq(user.email.to_owned())
@@ -129,8 +127,8 @@ pub async fn update_users(id: i32, _auth: AuthenticatedUser, db: DbConn, user: J
 }
 
 #[delete("/users/<id>")]
-pub async fn delete_users(id: i32, _auth: AuthenticatedUser, db: DbConn) -> Value {
-    match _auth.role {
+pub async fn delete_users(id: i32, auth: AuthenticatedUser, db: DbConn) -> Value {
+    match auth.role {
         1 => {
             db.run(move |c|{
                 diesel::delete(users::table.find(id))
