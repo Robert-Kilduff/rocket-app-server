@@ -54,8 +54,8 @@ async fn main() {
             myapi::user_api::test_jwt,
 
             myapi::habit_api::get_habits,
-            myapi::habit_api::view_habit,
-            myapi::habit_api::create_habit,
+            myapi::habit_api::view_habit_controller,
+            myapi::habit_api::create_habit_controller,
             myapi::habit_api::delete_habit,
             myapi::habit_api::update_habit_controller,
 

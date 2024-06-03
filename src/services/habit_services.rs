@@ -3,7 +3,10 @@ use crate::{auth::AuthenticatedUser, models::{HabitUpdate, NewHabit}};
 use crate::schema::habits;
 use diesel::ExpressionMethods;
 use diesel::prelude::*;
-use rocket::serde::json::{json, Json};
+use rocket::serde::json::{json, Json as JsonValue};
+//use serde_json::json;
+use crate::models::Habit;
+
 
 
 pub struct HabitService {
@@ -15,7 +18,7 @@ impl HabitService {
         HabitService { db }
     }
 
-    pub async fn update_habit(&self, user_id: i32, habit_id: i32, auth: &AuthenticatedUser, update_data: &Json<HabitUpdate>) -> Result<(), HabitUpdateError> {
+    pub async fn update_habit(&self, user_id: i32, habit_id: i32, auth: &AuthenticatedUser, update_data: &JsonValue<HabitUpdate>) -> Result<(), HabitUpdateError> {
         if auth.role != 1 && auth.user_id != user_id {
             return Err(HabitUpdateError::AuthorizationError);
         }
@@ -34,7 +37,7 @@ impl HabitService {
         }
     }
 
-    pub async fn create_habit(&self, user_id: i32, auth: &AuthenticatedUser, new_data: Json<NewHabit>) -> Result<(), HabitUpdateError> {
+    pub async fn create_habit(&self, user_id: i32, auth: &AuthenticatedUser, new_data: JsonValue<NewHabit>) -> Result<(), HabitUpdateError> {
         if auth.role != 1 && auth.user_id != user_id {
             return Err(HabitUpdateError::AuthorizationError);
         }
@@ -50,8 +53,31 @@ impl HabitService {
             Err(_) => Err(HabitUpdateError::DatabaseError),
         }
     }
-}
 
+
+    pub async fn view_habit(&self, user_id: i32, habit_id: i32, auth: &AuthenticatedUser) -> Result<JsonValue<Habit>, HabitUpdateError> {
+        if auth.user_id != user_id && auth.role != 1 {
+            return Err(HabitUpdateError::AuthorizationError);
+        }
+    
+        let result = self.db.run(move |c| {
+            habits::table.filter(habits::id.eq(habit_id).and(habits::user_id.eq(user_id)))
+                .get_result::<Habit>(c)
+        }).await;
+    
+        match result {
+            Ok(habit) => Ok(JsonValue(habit)),
+            Err(diesel::result::Error::NotFound) => Err(HabitUpdateError::NoHabitFound),
+            Err(_) => Err(HabitUpdateError::DatabaseError),
+        }
+    }
+    
+    
+    pub async fn delete_habit(&self, user_id: i32, habit_id: i32, auth: &AuthenticatedUser) -> Result<(), HabitUpdateError> {
+        unimplemented!()
+
+    }     
+}
 pub enum HabitUpdateError {
     AuthorizationError,
     DatabaseError,

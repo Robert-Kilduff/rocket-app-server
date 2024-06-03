@@ -40,7 +40,7 @@ pub async fn begin_auth_session(login: Json<UserAuth>, db: DbConn) -> Result<roc
 pub async fn test_jwt(_auth: AuthenticatedUser) -> Value {
     json!("this statement authenticated")
 }
-//curl -X GET "http://127.0.0.1:8000/testJWT" -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWJqZWN0Ijo1LCJpYXQiOjE3MTQzMDA0MTYsImV4cCI6MTcxNDMwMTYxNiwicm9sZSI6MX0.4fnX5U1uPM8Oi2Ctqe6be65sHAfknYqhf04xe7d85FE"
+//curl -X GET "http://127.0.0.1:8000/users" -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWJqZWN0Ijo4LCJpYXQiOjE3MTQ0MDI2NDYsImV4cCI6MTcxNDQwMzg0Niwicm9sZSI6MX0.g4a-pqVjcJdOoljPL2RXUb6zbAG97i4ooKoy9YaiLcA"
 
 #[get("/users")]
 pub async fn get_users(_auth: AuthenticatedUser, db: DbConn) -> Value {
@@ -52,7 +52,10 @@ pub async fn get_users(_auth: AuthenticatedUser, db: DbConn) -> Value {
                 .map(|users| json!(users))
                 .unwrap_or_else(|_| json!({ "error": "DB ERROR" }))
         }).await,
-        _ => json!({ "error": "Access denied" }),
+        _ => {
+            println!("Access denied for role: {}", _auth.role);
+            json!({ "error": "Access denied" })
+        },
     };
     json!(result)
 }

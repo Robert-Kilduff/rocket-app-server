@@ -1,5 +1,6 @@
 use rocket::request::{FromRequest, Request, Outcome};
 use rocket::http::Status;
+use rocket::fairing::AdHoc;
 
 use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey};
 use serde::{Serialize, Deserialize};
@@ -39,7 +40,6 @@ pub struct UserAuth {
 }
 
 
-//TODO test with new endpoint, define results via id and role.
 
 
 #[rocket::async_trait]
@@ -78,7 +78,7 @@ pub fn create_jwt(id: &i32, role: i32) -> Result<String, jsonwebtoken::errors::E
 }
 
 pub fn validate_jwt(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
-    let secret_key = env::var("SECRET_KEY").expect("SECRET_KEY must be set");
+    let secret_key = env::var("JWT_SECRET_KEY").expect("SECRET_KEY must be set");
     decode::<Claims>(token, &DecodingKey::from_secret(secret_key.as_bytes()), &Validation::default())
         .map(|data| data.claims)
 }

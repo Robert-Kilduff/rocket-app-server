@@ -32,8 +32,7 @@ def get_users():
     url = base_url+"users"
     token = login(admin=True)
     print(token)
-    base_headers = {}
-    base_headers['Authorization']= f"Bearer {token}"
+    base_headers = {'Authorization': f'Bearer {token}'}
     print(base_headers)
     response = requests.get(url, headers = base_headers)
     print(response.json())
@@ -68,6 +67,14 @@ def update_habit(habit_user_id, habit_id, new_name):
     print(data)
     response = requests.put(url = url, headers = base_headers, data = data)
     
+def view_habit(habit_user_id, habit_id):
+    token = login(admin=1)
+    base_headers = {}
+    base_headers['Authorization']= f"Bearer {token}"
+    base_headers["content-type"] = "application/json"
+    url = base_url+f"users/{habit_user_id}/habits/{habit_id}"
+    response = requests.get(url=url, headers = base_headers)
+    print(response.json())
     
     
     
