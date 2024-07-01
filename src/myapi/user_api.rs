@@ -6,9 +6,12 @@ use diesel::prelude::*;
 use rocket::serde::json::{json, Json, Value};
 use crate::auth::AuthenticatedUser;
 use crate::auth::UserAuth;
-use crate::models::{User, NewUser};
+use crate::models::{User, NewUser, UserUpdate};
 use crate::auth::create_jwt;
+use crate::schema::habits::user_id;
 use crate::schema::users;
+use crate::services::habit_services::HabitUpdateError;
+use crate::services::user_services::UserService;
 use super::super::DbConn;
 use rocket::http::Status;
 use bcrypt::verify;
@@ -19,21 +22,40 @@ use bcrypt::verify;
 pub async fn begin_auth_session(login: Json<UserAuth>, db: DbConn) -> Result<rocket::serde::json::Json<rocket::serde::json::Value>, Status> {
     let username = login.username.clone();
     let password = login.password.clone();
+    eprintln!("Attempting to find user: {}", username);
     let user = db.run(move |c| {
-        users::table.filter(users::name.eq(username))
-        .first::<User>(c).ok()
+        let result = users::table.filter(users::name.eq(username))
+        .first::<User>(c).ok();
+        eprintln!("Database query result: {:?}", result);
+        result
     }).await;
 
     match user {
-        Some(user) if verify(&password, &user.passhash).unwrap_or(false) => { 
-            // Create JWT 
-            match create_jwt(&user.id, user.role) {
-                Ok(token) => Ok(rocket::serde::json::Json(json!({"token": token}))),
-                Err(_) => Err(Status::InternalServerError),
+        Some(user) => {
+            match verify(&password, &user.passhash) {
+                Ok(true) => {
+                    // Create JWT 
+                    match create_jwt(&user.id, user.role) {
+                        Ok(token) => Ok(rocket::serde::json::Json(json!({"token": token}))),
+                        Err(_) => Err(Status::InternalServerError),
+                    }
+                },
+                Ok(false) => {
+                    eprintln!("Password verification failed for user: {}", user.name);
+                    Err(Status::Unauthorized)
+                },
+                Err(e) => {
+                    eprintln!("Error verifying password for user: {}: {:?}", user.name, e);
+                    Err(Status::Unauthorized)
+                },
             }
         },
-        _ => Err(Status::Unauthorized),
+        None => {
+            eprintln!("User not found: {:?}", user);
+            Err(Status::Unauthorized)
+        },
     }
+    
 }
 
 #[get("/testJWT")]
@@ -96,7 +118,28 @@ pub async fn create_user(auth: AuthenticatedUser, db: DbConn, mut new_user: Json
     
 
 }
-
+// Corrected version of the update_users_controller function
+#[put("/users_controller/<id>", format = "json", data = "<user>")]
+pub async fn update_users_controller(id: i32, auth: AuthenticatedUser, db: DbConn, user: Json<UserUpdate>) -> Result<Json<Value>, (Status, Json<Value>)> {
+    let service = UserService::new(db);
+    match service.update_user(id, &auth, &user).await {
+        Ok(_) => Ok(Json(json!({"message": "User updated successfully"}))),
+        Err(e) => match e {
+            HabitUpdateError::AuthorizationError => Err((
+                Status::Forbidden,
+                Json(json!({"error": "Access denied"}))
+            )),
+            HabitUpdateError::DatabaseError => Err((
+                Status::InternalServerError,
+                Json(json!({"error": "Database error during update"}))
+            )),
+            HabitUpdateError::NoHabitFound => Err((
+                Status::NotFound,
+                Json(json!({"error": "No user updated"}))
+            )),
+        },
+    }
+}
 
 #[put("/users/<id>", format = "json", data = "<user>")]
 pub async fn update_users(id: i32, auth: AuthenticatedUser, db: DbConn, user: Json<User>) -> Value {

@@ -2,7 +2,7 @@ use diesel::{deserialize::Queryable, prelude::Insertable, query_builder::AsChang
 use serde::{Serialize, Deserialize};
 use chrono::NaiveDateTime;
 use crate::schema::{users, habits};
-#[derive(Serialize, Deserialize, Queryable, AsChangeset)]
+#[derive(Serialize, Deserialize, Queryable, AsChangeset, Debug)]
 pub struct User {
     #[serde(skip_deserializing)]
     pub id: i32,
@@ -42,4 +42,10 @@ pub struct NewHabit {
 pub struct HabitUpdate {
     pub name: Option<String>,
     pub user_id: Option<i32>,  // Only admin
+}
+
+#[derive(Deserialize)]
+pub struct UserUpdate {
+    pub name: Option<String>,
+    pub email: Option<String>,
 }

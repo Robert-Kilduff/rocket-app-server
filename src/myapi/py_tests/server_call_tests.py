@@ -6,18 +6,22 @@ import json
 base_url = "http://127.0.0.1:8000/"
 
 
-def login(admin = True):
-    if admin:
-        data = json.dumps({
-            "username": "admin",
-            "password": "admin"
-        })
-        print(data)
+def login(admin=True):
+    data = json.dumps({
+        "username": "admin",
+        "password": "admin"
+    }) if admin else json.dumps({})
+    headers = {'Content-Type': 'application/json'}
+    url = base_url + "login"
+    response = requests.post(url, data=data, headers = headers)
+    if response.status_code == 200:
+        try:
+            return response.json()['token']
+        except (ValueError, KeyError):
+            print("Error parsing token from response.")
     else:
-        print("py login error")
-    url = base_url+"login"
-    response = requests.post(url, data= data)
-    return response.json()['token']
+        print(f"Error logging in: {response.status_code}")
+        print(response.text)
 
 def get_habits():
         url = base_url+"habits"
@@ -51,6 +55,13 @@ def create_habit(user_id, name):
     response = requests.post(url = url, headers = base_headers, data = data )
     print(response.json())
     
+def create_user(name):
+    token = login(admin=1)
+    base_headers = {}
+    base_headers['Authorization']= f"Bearer {token}"
+    base_headers["content-type"] = "application/json"
+    url = base_url+f"users/{habit_user_id}/habits/{habit_id}"
+    
 def update_habit(habit_user_id, habit_id, new_name):
     token = login(admin=1)
     base_headers = {}
@@ -78,4 +89,17 @@ def view_habit(habit_user_id, habit_id):
     
     
     
-    
+def update_user(user_id, new_name=None, email=None):
+    token = login(admin=1)
+    base_headers = {
+        'Authorization': f"Bearer {token}",
+        "content-type": "application/json"
+    }
+    url = base_url + f"users_controller/{user_id}"
+    data = {}
+    if new_name is not None:
+        data["name"] = new_name
+    if email is not None:
+        data["email"] = email
+    response = requests.put(url=url, headers=base_headers, data=json.dumps(data))
+    print(response.json())

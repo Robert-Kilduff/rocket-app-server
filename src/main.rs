@@ -59,6 +59,8 @@ async fn main() {
             myapi::habit_api::delete_habit,
             myapi::habit_api::update_habit_controller,
 
+            myapi::user_api::update_users_controller,
+
             ])
             .register("/", catchers![
                 not_found,
