@@ -113,4 +113,15 @@ def update_user(user_id, new_name=None, email=None):
         data["email"] = email
     response = requests.put(url=url, headers=base_headers, data=json.dumps(data))
     print(response.json())
+
+def delete_user(id):
+    token = login(admin=1)
+    base_headers = {
+        'Authorization': f"Bearer {token}",
+        "content-type": "application/json"
+    }
+    url = base_url + f"users/{id}"
+    response = requests.delete(url = url, headers = base_headers)
+    print(response.json())
+    
     

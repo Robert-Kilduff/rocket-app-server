@@ -46,8 +46,6 @@ async fn main() {
         .mount("/", routes![
             myapi::user_api::get_users,
             myapi::user_api::view_user,
-            myapi::user_api::create_user,
-            myapi::user_api::delete_users,
             myapi::user_api::begin_auth_session,
 
             myapi::user_api::test_jwt,
@@ -60,6 +58,7 @@ async fn main() {
 
             myapi::user_api::update_users_controller,
             myapi::user_api::create_user_controller,
+            myapi::user_api::delete_user_controller,
 
             ])
             .register("/", catchers![

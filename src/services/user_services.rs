@@ -75,4 +75,22 @@ impl UserService {
 
 
     }
+
+    pub async fn delete_user(&self, user_id: i32, auth: &AuthenticatedUser) -> Result<(), HabitUpdateError> {
+        if auth.role != 1 && auth.user_id != user_id {
+            return Err(HabitUpdateError::AuthorizationError);
+        }
+
+        let result = self.db.run(move |c| {
+            diesel::delete(users::table.filter(users::id.eq(user_id)))
+            .execute(c)
+        }).await;
+
+        match result {
+            Ok(count) if count > 0  => Ok(()),
+            Ok(_) => Err(HabitUpdateError::NoHabitFound),
+            Err(_) => Err(HabitUpdateError::DatabaseError),
+        
+        }
+    }
 }

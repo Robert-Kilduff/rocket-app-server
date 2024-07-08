@@ -4,6 +4,7 @@
 use diesel::ExpressionMethods;
 use diesel::prelude::*;
 use rocket::serde::json::{json, Json, Value};
+
 use crate::auth::AuthenticatedUser;
 use crate::auth::UserAuth;
 use crate::models::{User, NewUser, UserUpdate};
@@ -11,6 +12,7 @@ use crate::auth::create_jwt;
 use crate::schema::habits::user_id;
 use crate::schema::users;
 use crate::services::habit_services::HabitUpdateError;
+use crate::services::user_services;
 use crate::services::user_services::UserService;
 use super::super::DbConn;
 use rocket::http::Status;
@@ -149,16 +151,26 @@ pub async fn update_users_controller(id: i32, auth: AuthenticatedUser, db: DbCon
 
 
 #[delete("/users/<id>")]
-pub async fn delete_users(id: i32, auth: AuthenticatedUser, db: DbConn) -> Value {
-    match auth.role {
-        1 => {
-            db.run(move |c|{
-                diesel::delete(users::table.find(id))
-                .execute(c)
-                .expect("DB error deleting user");
-            json!({"message": "user deleted", "id": id})
-            }).await
-        },
-        _=> json!({"error": "Access Denied"})
+pub async fn delete_user_controller(id: i32, auth: AuthenticatedUser, db: DbConn) -> Result<Json<Value>, (Status, Json<Value>)>{
+    let service = UserService::new(db);
+
+    match service.delete_user(id, &auth).await {
+
+        Ok(_) => Ok(json!({"message": "user deleted successfully"}).into()),
+        Err(e) => match e {
+            HabitUpdateError::AuthorizationError => Err((
+                Status::Forbidden,
+                json!({"error": "Access denied"}).into()
+            )),
+            HabitUpdateError::DatabaseError => Err((
+                Status::InternalServerError,
+                json!({"error": "Database error during request"}).into()
+            )),
+            HabitUpdateError::NoHabitFound => Err((
+                Status::NotFound,
+                json!({"error": "No user delete"}).into(),
+            ))
+        }
+
     }
 }
