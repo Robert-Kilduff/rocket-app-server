@@ -55,12 +55,22 @@ def create_habit(user_id, name):
     response = requests.post(url = url, headers = base_headers, data = data )
     print(response.json())
     
-def create_user(name):
+def create_user(name, email, role, password):
     token = login(admin=1)
     base_headers = {}
     base_headers['Authorization']= f"Bearer {token}"
     base_headers["content-type"] = "application/json"
-    url = base_url+f"users/{habit_user_id}/habits/{habit_id}"
+    url = base_url+f"users/"
+    data = json.dumps({
+        "name": name,
+        "email": email,
+        "role": role,
+        "passhash": password,
+        
+    })
+    print(data)
+    response = requests.post(url = url, headers = base_headers, data = data)
+    print(response.json())
     
 def update_habit(habit_user_id, habit_id, new_name):
     token = login(admin=1)
@@ -103,3 +113,4 @@ def update_user(user_id, new_name=None, email=None):
         data["email"] = email
     response = requests.put(url=url, headers=base_headers, data=json.dumps(data))
     print(response.json())
+    

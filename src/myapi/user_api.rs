@@ -99,27 +99,33 @@ pub async fn view_user(id: i32, _auth: AuthenticatedUser, db: DbConn) -> Value {
     json!(result)
     
 }
-
 #[post("/users", format = "json", data = "<new_user>")]
-pub async fn create_user(auth: AuthenticatedUser, db: DbConn, mut new_user: Json<NewUser>) -> Value {
-    match auth.role {
-        1 => {
-            new_user.hashgen(); //more explicitly .into_inner() not mut, not &*
-            db.run(move |c| {
-                let result = diesel::insert_into(users::table)
-                .values(&*new_user)
-                .execute(c)
-                .expect("DB ERROR INSERTING");
-            json!(result)
-            }).await
+pub async fn create_user_controller(auth: AuthenticatedUser, db: DbConn, mut new_user: Json<NewUser>) -> Result<Json<Value>, (Status, Json<Value>)> {
+    let service = UserService::new(db);
+
+    match service.create_user(&auth, new_user).await {
+        Ok(_) => Ok(json!({"message": "User created successfully"}).into()),
+        Err(e) => match e {
+            HabitUpdateError::AuthorizationError => Err((
+                Status::Forbidden,
+                json!({"error": "Access denied"}).into()
+            )),
+            HabitUpdateError::DatabaseError => Err((
+                Status::InternalServerError,
+                json!({"error": "Database error during creation, please try again"}).into()
+            )),
+            HabitUpdateError::NoHabitFound => Err((
+                Status::InternalServerError,
+                json!({"error": "Internal error, please try again"}).into()
+            )),
         },
-        _=> json!({"error": "Access Denied"})
+
     }
     
 
 }
-// Corrected version of the update_users_controller function
-#[put("/users_controller/<id>", format = "json", data = "<user>")]
+
+#[put("/users/<id>", format = "json", data = "<user>")]
 pub async fn update_users_controller(id: i32, auth: AuthenticatedUser, db: DbConn, user: Json<UserUpdate>) -> Result<Json<Value>, (Status, Json<Value>)> {
     let service = UserService::new(db);
     match service.update_user(id, &auth, &user).await {
@@ -141,36 +147,6 @@ pub async fn update_users_controller(id: i32, auth: AuthenticatedUser, db: DbCon
     }
 }
 
-#[put("/users/<id>", format = "json", data = "<user>")]
-pub async fn update_users(id: i32, auth: AuthenticatedUser, db: DbConn, user: Json<User>) -> Value {
-    let result = match auth.role {
-        1 => {
-            db.run(move |c| {
-                diesel::update(users::table.find(id))
-                .set((
-                    users::name.eq(user.name.to_owned()),
-                    users::email.eq(user.email.to_owned())
-        
-                ))
-                .execute(c)
-                .expect("DB error updating user");
-            }).await
-        },
-        _ => {
-            db.run(move |c| {
-                diesel::update(users::table.find(auth.role))
-                .set((
-                    users::name.eq(user.name.to_owned()),
-                    users::email.eq(user.email.to_owned())
-                ))
-                .execute(c)
-                .expect("DB error updating user");
-            }).await
-        }
-    };
-    json!(result)
-    
-}
 
 #[delete("/users/<id>")]
 pub async fn delete_users(id: i32, auth: AuthenticatedUser, db: DbConn) -> Value {

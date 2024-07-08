@@ -47,7 +47,6 @@ async fn main() {
             myapi::user_api::get_users,
             myapi::user_api::view_user,
             myapi::user_api::create_user,
-            myapi::user_api::update_users,
             myapi::user_api::delete_users,
             myapi::user_api::begin_auth_session,
 
@@ -60,6 +59,7 @@ async fn main() {
             myapi::habit_api::update_habit_controller,
 
             myapi::user_api::update_users_controller,
+            myapi::user_api::create_user_controller,
 
             ])
             .register("/", catchers![

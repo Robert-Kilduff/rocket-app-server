@@ -3,9 +3,9 @@ use crate::{auth::AuthenticatedUser, models::UserUpdate};
 use crate::schema::users;
 use diesel::{update, ExpressionMethods};
 use diesel::prelude::*;
-use rocket::serde::json::{json, Json as JsonValue};
+use rocket::serde::json::{self, json, Json as JsonValue};
 //use serde_json::json;
-use crate::models::Habit;
+use crate::models::{Habit, HabitUpdate, NewUser};
 
 pub struct UserService {
     db: DbConn,
@@ -52,5 +52,27 @@ impl UserService {
             Ok(_) => Err(HabitUpdateError::NoHabitFound),
             Err(_) => Err(HabitUpdateError::DatabaseError),
         }
+    }
+
+    pub async fn create_user(&self, auth: &AuthenticatedUser, mut new_user: JsonValue<NewUser>) -> Result<(), HabitUpdateError>  {
+        if auth.role != 1 {
+            return Err(HabitUpdateError::AuthorizationError);
+        }
+
+        new_user.hashgen();
+
+        let result = self.db.run(move |c| {
+            diesel::insert_into(users::table)
+            .values(&*new_user)
+            .execute(c)
+        }).await;
+
+        match result {
+            Ok(count) if count > 0 => Ok(()),
+            Ok(_) => Err(HabitUpdateError::NoHabitFound),
+            Err(_) => Err(HabitUpdateError::DatabaseError),
+        }
+
+
     }
 }
