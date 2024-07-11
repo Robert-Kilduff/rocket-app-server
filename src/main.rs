@@ -44,18 +44,18 @@ fn unprocessable_entity() -> Value {
 async fn main() {
     if let Err(e) = rocket::build()
         .mount("/", routes![
-            myapi::user_api::get_users,
-            myapi::user_api::view_user,
             myapi::user_api::begin_auth_session,
 
             myapi::user_api::test_jwt,
 
-            myapi::habit_api::get_habits,
+            myapi::habit_api::get_habits_controller,
             myapi::habit_api::view_habit_controller,
             myapi::habit_api::create_habit_controller,
-            myapi::habit_api::delete_habit,
+            myapi::habit_api::delete_habit_controller,
             myapi::habit_api::update_habit_controller,
 
+            myapi::user_api::get_users_controller,
+            myapi::user_api::view_user_controller,
             myapi::user_api::update_users_controller,
             myapi::user_api::create_user_controller,
             myapi::user_api::delete_user_controller,

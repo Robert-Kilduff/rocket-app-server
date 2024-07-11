@@ -3,7 +3,7 @@ use crate::{auth::AuthenticatedUser, models::{HabitUpdate, NewHabit}};
 use crate::schema::habits;
 use diesel::ExpressionMethods;
 use diesel::prelude::*;
-use rocket::serde::json::{json, Json as JsonValue};
+use rocket::serde::json::Json;
 //use serde_json::json;
 use crate::models::Habit;
 
@@ -18,7 +18,7 @@ impl HabitService {
         HabitService { db }
     }
 
-    pub async fn update_habit(&self, user_id: i32, habit_id: i32, auth: &AuthenticatedUser, update_data: &JsonValue<HabitUpdate>) -> Result<(), HabitUpdateError> {
+    pub async fn update_habit(&self, user_id: i32, habit_id: i32, auth: &AuthenticatedUser, update_data: &Json<HabitUpdate>) -> Result<(), HabitUpdateError> {
         if auth.role != 1 && auth.user_id != user_id {
             return Err(HabitUpdateError::AuthorizationError);
         }
@@ -37,7 +37,7 @@ impl HabitService {
         }
     }
 
-    pub async fn create_habit(&self, user_id: i32, auth: &AuthenticatedUser, new_data: JsonValue<NewHabit>) -> Result<(), HabitUpdateError> {
+    pub async fn create_habit(&self, user_id: i32, auth: &AuthenticatedUser, new_data: Json<NewHabit>) -> Result<(), HabitUpdateError> {
         if auth.role != 1 && auth.user_id != user_id {
             return Err(HabitUpdateError::AuthorizationError);
         }
@@ -55,7 +55,7 @@ impl HabitService {
     }
 
 
-    pub async fn view_habit(&self, user_id: i32, habit_id: i32, auth: &AuthenticatedUser) -> Result<JsonValue<Habit>, HabitUpdateError> {
+    pub async fn view_habit(&self, user_id: i32, habit_id: i32, auth: &AuthenticatedUser) -> Result<Json<Habit>, HabitUpdateError> {
         if auth.user_id != user_id && auth.role != 1 {
             return Err(HabitUpdateError::AuthorizationError);
         }
@@ -66,7 +66,7 @@ impl HabitService {
         }).await;
     
         match result {
-            Ok(habit) => Ok(JsonValue(habit)),
+            Ok(habit) => Ok(Json(habit)),
             Err(diesel::result::Error::NotFound) => Err(HabitUpdateError::NoHabitFound),
             Err(_) => Err(HabitUpdateError::DatabaseError),
         }
@@ -90,6 +90,24 @@ impl HabitService {
         }
 
     }     
+
+    pub async fn get_habits(&self, auth: &AuthenticatedUser) -> Result<Json<Vec<Habit>>, HabitUpdateError> {
+        if auth.role != 1 {
+            return Err(HabitUpdateError::AuthorizationError);
+        }
+        let habits = self.db.run(move |c| {
+            habits::table.order(habits::id.desc())
+            .limit(1000)
+            .order_by(habits::user_id.desc())
+            .load::<Habit>(c)
+            .map(|habits| rocket::serde::json::Json(habits))
+        }).await;
+
+        match habits {
+            Ok(habits) => Ok(habits),
+            Err(_) => Err(HabitUpdateError::DatabaseError),
+        }
+    }
 }
 pub enum HabitUpdateError {
     AuthorizationError,

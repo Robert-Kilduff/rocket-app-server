@@ -9,10 +9,8 @@ use crate::auth::AuthenticatedUser;
 use crate::auth::UserAuth;
 use crate::models::{User, NewUser, UserUpdate};
 use crate::auth::create_jwt;
-use crate::schema::habits::user_id;
 use crate::schema::users;
 use crate::services::habit_services::HabitUpdateError;
-use crate::services::user_services;
 use crate::services::user_services::UserService;
 use super::super::DbConn;
 use rocket::http::Status;
@@ -67,42 +65,39 @@ pub async fn test_jwt(_auth: AuthenticatedUser) -> Value {
 //curl -X GET "http://127.0.0.1:8000/users" -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWJqZWN0Ijo4LCJpYXQiOjE3MTQ0MDI2NDYsImV4cCI6MTcxNDQwMzg0Niwicm9sZSI6MX0.g4a-pqVjcJdOoljPL2RXUb6zbAG97i4ooKoy9YaiLcA"
 
 #[get("/users")]
-pub async fn get_users(_auth: AuthenticatedUser, db: DbConn) -> Value {
-    let result = match _auth.role {
-        1 => db.run(|c| {
-            users::table.order(users::id.desc())
-                .limit(1000)
-                .load::<User>(c)
-                .map(|users| json!(users))
-                .unwrap_or_else(|_| json!({ "error": "DB ERROR" }))
-        }).await,
-        _ => {
-            println!("Access denied for role: {}", _auth.role);
-            json!({ "error": "Access denied" })
-        },
-    };
-    json!(result)
+pub async fn get_users_controller(_auth: AuthenticatedUser, db: DbConn) -> Result<Json<Value>, (Status, Json<Value>)>  {
+    let service = UserService::new(db);
+
+    match service.get_users(&_auth).await {
+        Ok(users) => Ok(json!({
+            "result": *users,
+            "message": "User returned successfully"
+            }).into()),
+        Err(HabitUpdateError::AuthorizationError) => Err((Status::Forbidden, Json(json!({"error": "Access denied"})))),
+        Err(HabitUpdateError::DatabaseError) => Err((Status::InternalServerError, Json(json!({"error": "Database error"})))),
+        Err(HabitUpdateError::NoHabitFound) => Err((Status::NotFound, Json(json!({"error": "No users found"})))),
+    }
 }
 
+
 #[get("/users/<id>")]
-pub async fn view_user(id: i32, _auth: AuthenticatedUser, db: DbConn) -> Value {
-    let result = match _auth.role {
-        1 => db.run(move |c| {
-            users::table.find(id)
-            .get_result::<User>(c)
-            .expect("DB error selecting user");
-        }).await,
-        _=> db.run(move |c| {
-            users::table.find(_auth.user_id)
-            .get_result::<User>(c)
-            .expect("DB error selecting user");
-        }).await,
-    };
-    json!(result)
-    
+pub async fn view_user_controller(id:i32, _auth: AuthenticatedUser, db: DbConn) -> Result<Json<Value>, (Status, Json<Value>)>  {
+    let service = UserService::new(db);
+
+    match service.view_user(id, &_auth).await {
+        Ok(user) => Ok(json!({
+        "result": *user,
+        "message": "User returned successfully"
+        }).into()),
+        Err(HabitUpdateError::AuthorizationError) => Err((Status::Forbidden, Json(json!({"error": "Access denied"})))),
+        Err(HabitUpdateError::DatabaseError) => Err((Status::InternalServerError, Json(json!({"error": "Database error"})))),
+        Err(HabitUpdateError::NoHabitFound) => Err((Status::NotFound, Json(json!({"error": "No user found"})))),
+    }
 }
+
+
 #[post("/users", format = "json", data = "<new_user>")]
-pub async fn create_user_controller(auth: AuthenticatedUser, db: DbConn, mut new_user: Json<NewUser>) -> Result<Json<Value>, (Status, Json<Value>)> {
+pub async fn create_user_controller(auth: AuthenticatedUser, db: DbConn, new_user: Json<NewUser>) -> Result<Json<Value>, (Status, Json<Value>)> {
     let service = UserService::new(db);
 
     match service.create_user(&auth, new_user).await {
