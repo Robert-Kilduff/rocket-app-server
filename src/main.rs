@@ -4,11 +4,13 @@ use diesel::connection::TransactionDepthChange;
 use diesel::{dsl::Limit, ExpressionMethods};
 use diesel::prelude::*;
 use rocket::serde::json::Json;
+use rocket::figment::{Figment, providers::{Format, Toml, Serialized}};
 use rocket::{fairing, http::Status, response::status, serde::json::{json, Value}};
 use rocket_sync_db_pools::database;
 use models::{User, NewUser};
 use auth::BasicAuth;
 use schema::users;
+use rocket::Config;
 
 //use serde_json::json;
 mod myapi;
@@ -42,7 +44,13 @@ fn unprocessable_entity() -> Value {
 }
 #[rocket::main]
 async fn main() {
-    if let Err(e) = rocket::build()
+    let figment = Figment::from(Config::default())
+    .merge(("address", "0.0.0.0"))
+    .merge(("port", 8000))
+    .merge(Toml::file("Rocket.toml").nested());
+
+    if let Err(e) = rocket::custom(figment)
+     // bind to all network interfaces
         .mount("/", routes![
             myapi::user_api::begin_auth_session,
 
@@ -60,13 +68,13 @@ async fn main() {
             myapi::user_api::create_user_controller,
             myapi::user_api::delete_user_controller,
 
-            ])
-            .register("/", catchers![
-                not_found,
-                unauthorized,
-                unprocessable_entity,
+        ])
+        .register("/", catchers![
+            not_found,
+            unauthorized,
+            unprocessable_entity,
 
-            ])
+        ])
         .attach(DbConn::fairing()) //check if it can launch
         .launch()
         .await {
