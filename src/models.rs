@@ -1,7 +1,7 @@
 use diesel::{deserialize::Queryable, prelude::Insertable, query_builder::AsChangeset};
 use serde::{Serialize, Deserialize};
 use chrono::NaiveDateTime;
-use crate::schema::{users, habits};
+use crate::schema::{users, habits, tasks, task_habit};
 #[derive(Serialize, Deserialize, Queryable, AsChangeset, Debug)]
 pub struct User {
     #[serde(skip_deserializing)]
@@ -49,3 +49,46 @@ pub struct UserUpdate {
     pub name: Option<String>,
     pub email: Option<String>,
 }
+
+#[derive(Serialize, Deserialize, Queryable, AsChangeset)]
+pub struct Task {
+    pub id: i32,
+    pub name: String,
+    pub created_at: NaiveDateTime,
+    pub completed_at: Option<NaiveDateTime>,
+    pub is_completed: Option<bool>,
+    pub complexity: Option<i32>,
+}
+#[derive(Deserialize)]
+pub struct TaskUpdate {
+    pub name: Option<String>,
+    pub is_completed: Option<bool>,
+    pub complexity: Option<i32>,
+}
+#[derive(Deserialize)]
+pub struct NewTask {
+    pub name: String,
+    pub complexity: i32,
+    pub habit_id: i32,
+}
+
+#[derive(Serialize, Deserialize, Queryable)]
+pub struct TaskWithHabit {
+    #[serde(skip_deserializing)]
+    id: i32,
+    pub name: String,
+    #[serde(skip_deserializing)]
+    created_at: chrono::NaiveDateTime,
+    completed_at: Option<chrono::NaiveDateTime>,
+    is_completed: Option<bool>,
+    pub complexity: Option<i32>,
+    habit_name: String,
+}
+
+#[derive(Deserialize, Insertable)]
+#[diesel(table_name = task_habit)]
+pub struct NewTaskHabit {
+    pub task_id: i32,
+    pub habit_id: i32,
+    pub contribution: Option<i32>,
+}   

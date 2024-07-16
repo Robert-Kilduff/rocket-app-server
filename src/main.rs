@@ -68,6 +68,10 @@ async fn main() {
             myapi::user_api::create_user_controller,
             myapi::user_api::delete_user_controller,
 
+            myapi::task_api::get_tasks_controller,
+            myapi::task_api::view_task_controller,
+            
+
         ])
         .register("/", catchers![
             not_found,
