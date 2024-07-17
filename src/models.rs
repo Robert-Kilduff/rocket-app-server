@@ -95,6 +95,7 @@ pub struct NewTaskHabit {
 }   
 
 #[derive(Deserialize)]
+
 pub struct NewTaskRequest {
     pub name: String,
     pub  habit_id: i32,
