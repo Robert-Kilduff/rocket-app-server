@@ -70,6 +70,7 @@ async fn main() {
 
             myapi::task_api::get_tasks_controller,
             myapi::task_api::view_task_controller,
+            myapi::task_api::create_task_controller,
             
 
         ])

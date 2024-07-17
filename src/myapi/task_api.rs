@@ -3,7 +3,7 @@ use rocket::http::Status;
 
 
 use crate::auth::AuthenticatedUser;
-use crate::models::{NewTask, TaskUpdate};
+use crate::models::{NewTask, NewTaskRequest, Task, TaskUpdate};
 use crate::services::task_services::{TaskService, TaskUpdateError};
 use crate::DbConn;
 
@@ -54,6 +54,33 @@ pub async fn view_task_controller(task_user_id: i32, task_id: i32, auth: Authent
                 Status::NoContent,
                 json!({"error": "No task found"}).into()
             )),
+        },
+    }
+}
+
+#[post("/users/<_task_user_id>/tasks", data = "<new_task>")]
+pub async fn create_task_controller(_task_user_id: i32, new_task: Json<NewTaskRequest>, auth: AuthenticatedUser, db: DbConn) -> Result<Json<Value>, (Status, Json<Value>)> {
+    let service = TaskService::new(db);
+
+    match service.create_task(new_task, &auth).await {
+        Ok(task) => Ok(json!({
+            "result": task,
+            "message": "Task created successfully"
+        }).into()),
+        Err(e) => match e {
+            TaskUpdateError::AuthorizationError => Err((
+                Status::Forbidden,
+                json!({"error": "Access denied"}).into()
+            )),
+            TaskUpdateError::DatabaseError => Err((
+                Status::InternalServerError,
+                json!({"error": "Database error during task creation"}).into()
+            )),
+            TaskUpdateError::NoTaskFound => Err((
+                Status::NoContent,
+                json!({"error": "No task found"}).into()
+            )),
+            
         },
     }
 }

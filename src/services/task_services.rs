@@ -1,7 +1,7 @@
 use core::task;
 
 use super::super::DbConn;
-use crate::{auth::AuthenticatedUser, models::{NewTask, NewTaskHabit, TaskUpdate, TaskWithHabit}};
+use crate::{auth::AuthenticatedUser, models::{NewTask, NewTaskHabit, TaskUpdate, TaskWithHabit, NewTaskRequest}};
 use crate::schema::{tasks, habits, task_habit};
 use diesel::ExpressionMethods;
 use diesel::prelude::*;
@@ -80,55 +80,47 @@ impl TaskService {
         }
     }
     //TODO this needs an associated habit_id & the habittask table updating.
-    pub async fn create_task(&self, new_task: Json<NewTask>, auth: &AuthenticatedUser) -> Result<(), TaskUpdateError> {
-        
+    pub async fn create_task(&self, new_task: Json<NewTaskRequest>, auth: &AuthenticatedUser) -> Result<(), TaskUpdateError> {
+            
         let new_task = new_task.into_inner();
+    
         let new_task_record = NewTask {
             name: new_task.name,
-            complexity: new_task.complexity,
-            habit_id: new_task.habit_id,
-        };  
-        // IM IN THE MIDDLE OF BUILDING THIS NEW TASK RECORD, give it the fields it needs to be a task in the table and have a habit id for later.
-        //then it can be associated in the task_habit_record.
-        //MAYBE THE JSON PASSED IN SHOULD JUST BE A TASK BUT THEN ADD SKIP DESERIALIZE JUST LIKE USER FIELD
-        // CHECK WHAT I DID FOR MAKING A NEW USER IN THE USER SERVICE
-
-
+            is_completed: new_task.is_completed.unwrap_or(false),
+            complexity: new_task.complexity.unwrap_or(2),
+        };
+    
         let result = self.db.run(move |c| {
-            c.transaction::<_, diesel::result::Error, _>(|| {
+            c.transaction::<_, diesel::result::Error, _>(|c| {
                 diesel::insert_into(tasks::table)
                     .values(&new_task_record)
                     .execute(c)?;
-
+    
                 let task_id = tasks::table
-                .order(id.desc())
-                .select(id)
-                .first::<i32>(c)?;
-
+                    .order(id.desc())
+                    .select(id)
+                    .first::<i32>(c)?;
+    
                 let new_task_habit_record = NewTaskHabit {
                     task_id,
                     habit_id: new_task.habit_id,
                     contribution: new_task.contribution,
                 };
-
-                
     
+                diesel::insert_into(task_habit::table)
+                    .values(&new_task_habit_record)
+                    .execute(c)?;
+    
+                Ok(())
             })
         }).await;
-        let user_id = auth.user_id;
-        let result = self.db.run(move |c| {
-            diesel::insert_into(tasks::table)
-                .values(&*new_task)
-                .execute(c)
-        }).await;
-
-        match result {
-            Ok(_) => Ok(()),
-            Err(_) => Err(TaskUpdateError::DatabaseError),
-        }
+    
+        result.map_err(|_| TaskUpdateError::DatabaseError).map(|_| ()) //dont like this but it stops error errors
     }
 
-}
+
+    }
+
 
 pub enum TaskUpdateError {
     AuthorizationError,

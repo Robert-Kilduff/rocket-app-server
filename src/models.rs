@@ -65,11 +65,12 @@ pub struct TaskUpdate {
     pub is_completed: Option<bool>,
     pub complexity: Option<i32>,
 }
-#[derive(Deserialize)]
+#[derive(Deserialize, Insertable)]
+#[diesel(table_name = tasks)]
 pub struct NewTask {
     pub name: String,
     pub complexity: i32,
-    pub habit_id: i32,
+    pub is_completed: bool,
 }
 
 #[derive(Serialize, Deserialize, Queryable)]
@@ -92,3 +93,12 @@ pub struct NewTaskHabit {
     pub habit_id: i32,
     pub contribution: Option<i32>,
 }   
+
+#[derive(Deserialize)]
+pub struct NewTaskRequest {
+    pub name: String,
+    pub  habit_id: i32,
+    pub is_completed: Option<bool>,
+    pub complexity: Option<i32>,
+    pub contribution: Option<i32>,
+}

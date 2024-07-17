@@ -149,7 +149,27 @@ def view_user(id, token):
         success_rate = success_count / total_count
         return success_rate
 
+def create_task(user_id, habit_id, task_name, token):
+        base_headers = {}
+        base_headers['Authorization'] = f"Bearer {token}"
+        base_headers["Content-Type"] = "application/json"
+        url = base_url + f"users/{user_id}/tasks"
+        data = json.dumps({
+            "user_id": user_id,
+            "name": task_name,
+            "habit_id": habit_id
+        })
+        response = requests.post(url=url, headers=base_headers, data=data)
+        print(response.json())
 
+def view_task(user_id, task_id, token):
+    base_headers = {
+        'Authorization': f"Bearer {token}",
+        "content-type": "application/json"
+        }
+    url = base_url + f"users/{user_id}/tasks/{task_id}"
+    response = requests.get(url=url, headers=base_headers)
+    print(response.json())
 
 def main():
     token = login()
