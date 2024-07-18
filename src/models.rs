@@ -86,7 +86,7 @@ pub struct TaskWithHabit {
     habit_name: String,
 }
 
-#[derive(Deserialize, Insertable)]
+#[derive(Deserialize, Insertable, AsChangeset)]
 #[diesel(table_name = task_habit)]
 pub struct NewTaskHabit {
     pub task_id: i32,

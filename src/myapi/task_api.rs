@@ -3,7 +3,7 @@ use rocket::http::Status;
 
 
 use crate::auth::AuthenticatedUser;
-use crate::models::{NewTask, NewTaskRequest, Task, TaskUpdate};
+use crate::models::NewTaskRequest;
 use crate::services::task_services::{TaskService, TaskUpdateError};
 use crate::DbConn;
 
@@ -58,8 +58,8 @@ pub async fn view_task_controller(task_user_id: i32, task_id: i32, auth: Authent
     }
 }
 
-#[post("/users/<task_user_id>/tasks", data = "<new_task>")]
-pub async fn create_task_controller(task_user_id: i32, new_task: Json<NewTaskRequest>, auth: AuthenticatedUser, db: DbConn) -> Result<Json<Value>, (Status, Json<Value>)> {
+#[post("/users/<_task_user_id>/tasks", data = "<new_task>")]
+pub async fn create_task_controller(_task_user_id: i32, new_task: Json<NewTaskRequest>, auth: AuthenticatedUser, db: DbConn) -> Result<Json<Value>, (Status, Json<Value>)> {
     let service = TaskService::new(db);
 
     match service.create_task(new_task, &auth).await {
@@ -85,8 +85,8 @@ pub async fn create_task_controller(task_user_id: i32, new_task: Json<NewTaskReq
     }
 }
 
-#[put("/users/<task_user_id>/tasks/<task_id>", data = "<task>")]
-pub async fn update_task_controller(task_user_id: i32, task_id: i32, task: Json<TaskUpdate>, auth: AuthenticatedUser, db: DbConn) -> Result<Json<Value>, (Status, Json<Value>)> {
+#[put("/users/<_task_user_id>/tasks/<task_id>", data = "<task>")]
+pub async fn update_task_controller(_task_user_id: i32, task_id: i32, task: Json<NewTaskRequest>, auth: AuthenticatedUser, db: DbConn) -> Result<Json<Value>, (Status, Json<Value>)> {
     let service = TaskService::new(db);
 
     match service.update_task(task_id, task, &auth).await {
@@ -111,8 +111,8 @@ pub async fn update_task_controller(task_user_id: i32, task_id: i32, task: Json<
     }
 }
 
-#[delete("/users/<task_user_id>/tasks/<task_id>")]
-pub async fn delete_task_controller(task_user_id: i32, task_id: i32, auth: AuthenticatedUser, db: DbConn) -> Result<Json<Value>, (Status, Json<Value>)> {
+#[delete("/users/<_task_user_id>/tasks/<task_id>")]
+pub async fn delete_task_controller(_task_user_id: i32, task_id: i32, auth: AuthenticatedUser, db: DbConn) -> Result<Json<Value>, (Status, Json<Value>)> {
     let service = TaskService::new(db);
 
     match service.delete_task(task_id, &auth).await {

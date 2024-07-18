@@ -1,8 +1,7 @@
-use core::task;
-use std::f32::consts::E;
+
 
 use super::super::DbConn;
-use crate::{auth::AuthenticatedUser, models::{NewTask, NewTaskHabit, TaskUpdate, TaskWithHabit, NewTaskRequest}};
+use crate::{auth::AuthenticatedUser, models::{NewTask, NewTaskHabit, TaskWithHabit, NewTaskRequest}};
 use crate::schema::{tasks, habits, task_habit};
 use diesel::ExpressionMethods;
 use diesel::prelude::*;
@@ -80,7 +79,7 @@ impl TaskService {
         }
     }
 
-    pub async fn create_task(&self, new_task: Json<NewTaskRequest>, auth: &AuthenticatedUser) -> Result<(), TaskUpdateError> {
+    pub async fn create_task(&self, new_task: Json<NewTaskRequest>, _auth: &AuthenticatedUser) -> Result<(), TaskUpdateError> {
             
         let new_task = new_task.into_inner();
     
@@ -160,8 +159,9 @@ impl TaskService {
         }
     }
         
-    pub async fn update_task(&self, task_id: i32, task: Json<TaskUpdate>, auth: &AuthenticatedUser) -> Result<(), TaskUpdateError> {
+    pub async fn update_task(&self, task_id: i32, task: Json<NewTaskRequest>, auth: &AuthenticatedUser) -> Result<(), TaskUpdateError> {
         let updatetask = task.into_inner();
+
         let result = self.db.run(move |c| {
             c.transaction::<_, diesel::result::Error, _>(|c| {
                 let task = tasks::table
@@ -184,23 +184,28 @@ impl TaskService {
 
                 if let (Some(task), Some(taskhabit)) = (task, taskhabit) {
                     if taskhabit.habit_id != updatetask.habit_id {
+                        
                         diesel::update(task_habit::table.filter(task_habit::task_id.eq(task_id)))
-                            .set(task_habit::habit_id.eq(updatetask.habit_id))
-                            .set(task_habit::contribution.eq(updatetask.contribution))
+                            .set((
+                                task_habit::habit_id.eq(updatetask.habit_id),
+                                task_habit::contribution.eq(updatetask.contribution),
+                            ))
                             .execute(c)?;
                         //TODO HERE Perhaps some change to the struct being passed in order to satisfy.
                         diesel::update(tasks::table.filter(tasks::id.eq(task_id)))
-                            .set(tasks::name.eq(updatetask.name))
-                            .set(tasks::is_completed.eq(updatetask.is_completed))
-                            .set(tasks::complexity.eq(updatetask.complexity))
+                            .set((tasks::name.eq(updatetask.name),
+                            tasks::is_completed.eq(updatetask.is_completed),
+                            tasks::complexity.eq(updatetask.complexity),
+                            ))
                             .execute(c)?;
                             Ok(())
 
                     } else {
                         diesel::update(tasks::table.filter(tasks::id.eq(task_id)))
-                            .set(tasks::name.eq(updatetask.name))
-                            .set(tasks::is_completed.eq(updatetask.is_completed))
-                            .set(tasks::complexity.eq(updatetask.complexity))
+                            .set((tasks::name.eq(updatetask.name),
+                            tasks::is_completed.eq(updatetask.is_completed),
+                            tasks::complexity.eq(updatetask.complexity),
+                            ))
                             .execute(c)?;
                             Ok(())
 

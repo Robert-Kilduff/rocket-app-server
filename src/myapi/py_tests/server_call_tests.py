@@ -170,10 +170,25 @@ def view_task(user_id, task_id, token):
     url = base_url + f"users/{user_id}/tasks/{task_id}"
     response = requests.get(url=url, headers=base_headers)
     print(response.json())
+    
+
+
+
+def update_task(user_id, habit_id, task_id, new_name, token):
+        base_headers = {
+            'Authorization': f"Bearer {token}",
+            "content-type": "application/json"
+        }
+        url = base_url + f"users/{user_id}/tasks/{task_id}"
+        data = json.dumps({
+            "name": new_name,
+            "habit_id": habit_id
+        })
+        response = requests.put(url=url, headers=base_headers, data=data)
+        print(response.json())
 
 def main():
     token = login()
-    x = throughput_testing(token)
     #get_habits()
     
     #create_habit(1, "test", token)
