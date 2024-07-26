@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DB_PATH=/rocket-app/database.sqlite  
+    volumes:
+      - .:/rocket-app
+
+  db:
+    image: nouchka/sqlite3
+    volumes:
+      - .:/rocket-app
+    environment:
+      - DB_PATH=/rocket-app/database.sqlite 
