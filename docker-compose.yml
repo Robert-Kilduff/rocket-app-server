@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      tags: [rk/rocket-app:latest]
+      tags: [robertkilduff/rocket-app:latest]
     ports:
       - "8000:8000"
     depends_on:
