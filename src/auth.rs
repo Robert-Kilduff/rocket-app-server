@@ -1,10 +1,8 @@
 use rocket::request::{FromRequest, Request, Outcome};
 use rocket::http::Status;
-use rocket::fairing::AdHoc;
 
 use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey};
 use serde::{Serialize, Deserialize};
-use serde_json::json;
 use std::env;
 use bcrypt::{hash,DEFAULT_COST};
 

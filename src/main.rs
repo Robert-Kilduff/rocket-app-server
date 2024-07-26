@@ -1,15 +1,9 @@
 #[macro_use] extern crate rocket;
 
-use diesel::connection::TransactionDepthChange;
-use diesel::{dsl::Limit, ExpressionMethods};
-use diesel::prelude::*;
-use rocket::serde::json::Json;
-use rocket::figment::{Figment, providers::{Format, Toml, Serialized}};
-use rocket::{fairing, http::Status, response::status, serde::json::{json, Value}};
+use rocket::figment::{Figment, providers::{Format, Toml}};
+use rocket::serde::json::{json, Value};
 use rocket_sync_db_pools::database;
-use models::{User, NewUser};
-use auth::BasicAuth;
-use schema::users;
+
 use rocket::Config;
 
 //use serde_json::json;
@@ -71,6 +65,8 @@ async fn main() {
             myapi::task_api::get_tasks_controller,
             myapi::task_api::view_task_controller,
             myapi::task_api::create_task_controller,
+            myapi::task_api::delete_task_controller,
+            myapi::task_api::update_task_controller,
             
 
         ])

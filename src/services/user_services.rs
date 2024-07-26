@@ -123,4 +123,5 @@ impl UserService {
             Err(_) => Err(HabitUpdateError::DatabaseError),
         }
     }
+
 }
