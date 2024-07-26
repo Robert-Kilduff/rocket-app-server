@@ -2,6 +2,7 @@
 name = "rocket-app"
 version = "0.1.0"
 edition = "2021"
+exclude = ["./py_tests"]
 
 [dependencies]
 rocket = { version = "0.5.0-rc", features = ["json"]}
@@ -15,6 +16,4 @@ jsonwebtoken = "7"
 time = "0.3"
 bcrypt = "0.15.1"
 
-[exclude]
-exclude = "./py-tests"
 
