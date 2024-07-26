@@ -106,7 +106,7 @@ def update_user(user_id, token, new_name=None, email=None):
         'Authorization': f"Bearer {token}",
         "content-type": "application/json"
     }
-    url = base_url + f"users_controller/{user_id}"
+    url = base_url + f"users/{user_id}"
     data = {}
     if new_name is not None:
         data["name"] = new_name
@@ -133,21 +133,6 @@ def view_user(id, token):
     response = requests.get(url = url, headers = base_headers)
     print(response.json())
     
-    def throughput_testing(token):
-        success_count = 0
-        total_count = 0
-        start_time = time.time()
-        
-        while time.time() - start_time < 60:  # Run the test for 60 seconds
-            try:
-                create_habit(1, "test", token)
-                success_count += 1
-            except Exception as e:
-                print(f"Error creating habit: {e}")
-            total_count += 1
-        
-        success_rate = success_count / total_count
-        return success_rate
 
 def create_task(user_id, habit_id, task_name, token):
         base_headers = {}
