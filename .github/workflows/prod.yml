@@ -56,7 +56,9 @@ jobs:
         run: sudo apt-get install -y sshpass
       
       - name: Copy docker-compose.yml to droplet
-        run: sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no docker-compose.yml root@${{ secrets.DROPLET_IP }}:/root
+        run: |
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no docker-compose.yml root@${{ secrets.DROPLET_IP }}:/root
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no Dockerfile root@${{ secrets.DROPLET_IP }}:/root
 
       - name: Deploy
         uses: appleboy/ssh-action@master
@@ -67,5 +69,5 @@ jobs:
           script: |
             cd ~
             docker compose down
-            docker compose pull
+            docker compose build api
             docker compose up -d
