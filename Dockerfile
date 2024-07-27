@@ -7,6 +7,8 @@ WORKDIR /rocket-app
 # Copy the source code and SQLite database into the container
 COPY . /rocket-app
 
+
+
 # Build the application
 RUN cargo build --release
 
@@ -16,11 +18,12 @@ FROM alpine:latest
 #install runtimes
 RUN apk add --no-cache libgcc libstdc++
 
-#wset workdir
+#set workdir
 WORKDIR /rocket-app
 
 # Copy the built application from the previous stage
 COPY --from=builder /rocket-app/target/release/rocket-app .
+COPY Cargo.toml Cargo.lock ./
 
 # Set the environment variables
 ENV SECRET_KEY=${SECRET_KEY}
