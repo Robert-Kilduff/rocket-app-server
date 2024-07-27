@@ -2,7 +2,7 @@
 FROM rust:latest
 
 # Set the working directory
-WORKDIR /app
+WORKDIR /rocket-app
 
 # Copy the source code and SQLite database into the container
 COPY . .
