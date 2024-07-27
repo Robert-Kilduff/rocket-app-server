@@ -57,8 +57,8 @@ jobs:
       
       - name: Copy docker-compose.yml to droplet
         run: |
-          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no docker-compose.yml root@${{ secrets.DROPLET_IP }}:/root
-          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no Dockerfile root@${{ secrets.DROPLET_IP }}:/root
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no docker-compose.yml root@${{ secrets.DROPLET_IP }}:~
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no Dockerfile root@${{ secrets.DROPLET_IP }}:~
           
       - name: List files in build context
         run: ls -la
@@ -70,8 +70,9 @@ jobs:
           username: root
           password: ${{ secrets.DROPLET_PASSWORD }}
           script: |
+            cd ~
             docker compose down
-            docker compose build api
+            docker compose pull
             docker compose up -d
       - name: List files in build context
         run: ls -la
