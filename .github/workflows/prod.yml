@@ -71,3 +71,5 @@ jobs:
             docker compose down
             docker compose build api
             docker compose up -d
+      - name: List files in build context
+        run: ls -la
