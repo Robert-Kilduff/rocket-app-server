@@ -70,9 +70,6 @@ jobs:
           username: root
           password: ${{ secrets.DROPLET_PASSWORD }}
           script: |
-            cd ~
-            docker compose down
-            docker compose build api
-            docker compose up -d
+            docker buildx build --push --tag robertkilduff/rocket-app:latest .
       - name: List files in build context
         run: ls -la
