@@ -1,14 +1,26 @@
 # Use the official Rust image as the base image
-FROM rust:latest
+FROM rust:latest as builder
 
 # Set the working directory
 WORKDIR /rocket-app
 
 # Copy the source code and SQLite database into the container
-COPY . .
+COPY . /rocket-app
 
 # Build the application
 RUN cargo build --release
+
+#make a smaller image using only needed
+FROM alpine:latest
+
+#install runtimes
+RUN apk add --no-cache libgcc libstdc++
+
+#wset workdir
+WORKDIR /rocket-app
+
+# Copy the built application from the previous stage
+COPY --from=builder /rocket-app/target/release/rocket-app .
 
 # Set the environment variables
 ENV SECRET_KEY=${SECRET_KEY}
@@ -17,5 +29,5 @@ ENV JWT_SECRET_KEY=${JWT_SECRET_KEY}
 EXPOSE 8000
 
 # Set the command to run the application
-CMD ["./target/release/rocket-app"]
+CMD ["./rocket-app"]
 
