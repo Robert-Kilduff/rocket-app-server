@@ -5,7 +5,7 @@ FROM rust:latest as builder
 WORKDIR /rocket-app
 
 # Copy the source code and SQLite database into the container
-COPY . /rocket-app
+COPY . .
 
 
 
@@ -23,7 +23,8 @@ WORKDIR /rocket-app
 
 # Copy the built application from the previous stage
 COPY --from=builder /rocket-app/target/release/rocket-app .
-COPY Cargo.toml Cargo.lock ./
+COPY --from=builder /rocket-app/Cargo.toml .
+COPY --from=builder /rocket-app/Cargo.lock .
 
 # Set the environment variables
 ENV SECRET_KEY=${SECRET_KEY}
