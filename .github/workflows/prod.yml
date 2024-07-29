@@ -18,6 +18,9 @@ jobs:
         with:
           profile: minimal
           toolchain: stable
+          
+      - name: List files in build context
+        run: ls -la
 
       - name: Build and test code
         run: |
@@ -62,6 +65,7 @@ jobs:
           
       - name: List files in build context
         run: ls -la
+      
 
       - name: Deploy
         uses: appleboy/ssh-action@master

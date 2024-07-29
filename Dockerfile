@@ -8,7 +8,17 @@ WORKDIR /rocket-app
 RUN echo "Current work dir is: $(pwd)"
 
 # Copy the source code and SQLite database into the container
-COPY . .
+COPY Cargo.toml Cargo.lock ./
+
+#continue copying source
+COPY src ./src
+
+# Copy other files
+COPY rocket.toml ./
+COPY diesel.toml ./
+COPY database.sqlite ./
+COPY migrations ./migrations
+
 
 #listing files to check for Cargo.toml
 RUN echo "Files after copy rocket-app: " && ls -la /rocket-app
@@ -35,7 +45,7 @@ COPY --from=builder /rocket-app/Cargo.toml .
 COPY --from=builder /rocket-app/Cargo.lock .
 
 #Logging the files in the final stages
-Run echo "files in rocket-app after copying from builder, final stage: " && ls -la /rocket-app
+RUN echo "files in rocket-app after copying from builder, final stage: " && ls -la /rocket-app
 # Set the environment variables
 ENV SECRET_KEY=${SECRET_KEY}
 ENV JWT_SECRET_KEY=${JWT_SECRET_KEY}
