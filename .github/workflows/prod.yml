@@ -49,7 +49,7 @@ jobs:
         env:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-        timeout-minutes: 60
+        timeout-minutes: 30
   
   deploy:
     needs: build
@@ -73,15 +73,16 @@ jobs:
       
       - name: Copy docker-compose.yml to droplet
         run: |
-          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no docker-compose.yml root@${{ secrets.DROPLET_IP }}:~
-          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no Dockerfile root@${{ secrets.DROPLET_IP }}:~
-          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no Cargo.toml root@${{ secrets.DROPLET_IP }}:~
-          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no Cargo.lock root@${{ secrets.DROPLET_IP }}:~
-          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no rocket.toml root@${{ secrets.DROPLET_IP }}:~
-          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no diesel.toml root@${{ secrets.DROPLET_IP }}:~
-          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no database.sqlite root@${{ secrets.DROPLET_IP }}:~
-          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -r -o StrictHostKeyChecking=no src root@${{ secrets.DROPLET_IP }}:~
-          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -r -o StrictHostKeyChecking=no migrations root@${{ secrets.DROPLET_IP }}:~
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no docker-compose.yml root@${{ secrets.DROPLET_IP }}:~/rocket-app/
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no Dockerfile root@${{ secrets.DROPLET_IP }}:~/rocket-app/
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking-no Cargo.toml root@${{ secrets.DROPLET_IP }}:~/rocket-app/
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking-no Cargo.lock root@${{ secrets.DROPLET_IP }}:~/rocket-app/
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking-no rocket.toml root@${{ secrets.DROPLET_IP }}:~/rocket-app/
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking-no diesel.toml root@${{ secrets.DROPLET_IP }}:~/rocket-app/
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking-no database.sqlite root@${{ secrets.DROPLET_IP }}:~/rocket-app/
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -r -o StrictHostKeyChecking-no src root@${{ secrets.DROPLET_IP }}:~/rocket-app/src
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -r -o StrictHostKeyChecking-no migrations root@${{ secrets.DROPLET_IP }}:~/rocket-app/migrations
+
 
           
       - name: List files in build context
@@ -96,10 +97,10 @@ jobs:
           username: root
           password: ${{ secrets.DROPLET_PASSWORD }}
           script: |
-            cd ~
+            cd ~/rocket-app
             docker compose down
-            docker compose build api
             docker compose up -d
-      - name: List files in build context
-        run: sshpass -p "${{ secrets.DROPLET_PASSWORD }}" ssh -o StrictHostKeyChecking=no root@${{ secrets.DROPLET_IP }} "docker ps"
+
+      - name: List running containers
+        run: sshpass -p "${{ secrets.DROPLET_PASSWORD }}" ssh -o StrictHostKeyChecking-no root@${{ secrets.DROPLET_IP }} "docker ps"
 
