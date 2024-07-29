@@ -75,13 +75,13 @@ jobs:
         run: |
           sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no docker-compose.yml root@${{ secrets.DROPLET_IP }}:~/rocket-app/
           sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no Dockerfile root@${{ secrets.DROPLET_IP }}:~/rocket-app/
-          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking-no Cargo.toml root@${{ secrets.DROPLET_IP }}:~/rocket-app/
-          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking-no Cargo.lock root@${{ secrets.DROPLET_IP }}:~/rocket-app/
-          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking-no rocket.toml root@${{ secrets.DROPLET_IP }}:~/rocket-app/
-          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking-no diesel.toml root@${{ secrets.DROPLET_IP }}:~/rocket-app/
-          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking-no database.sqlite root@${{ secrets.DROPLET_IP }}:~/rocket-app/
-          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -r -o StrictHostKeyChecking-no src root@${{ secrets.DROPLET_IP }}:~/rocket-app/src
-          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -r -o StrictHostKeyChecking-no migrations root@${{ secrets.DROPLET_IP }}:~/rocket-app/migrations
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no Cargo.toml root@${{ secrets.DROPLET_IP }}:~/rocket-app/
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no Cargo.lock root@${{ secrets.DROPLET_IP }}:~/rocket-app/
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no rocket.toml root@${{ secrets.DROPLET_IP }}:~/rocket-app/
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no diesel.toml root@${{ secrets.DROPLET_IP }}:~/rocket-app/
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no database.sqlite root@${{ secrets.DROPLET_IP }}:~/rocket-app/
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -r -o StrictHostKeyChecking=no src root@${{ secrets.DROPLET_IP }}:~/rocket-app/src
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -r -o StrictHostKeyChecking=no migrations root@${{ secrets.DROPLET_IP }}:~/rocket-app/migrations
 
 
           
