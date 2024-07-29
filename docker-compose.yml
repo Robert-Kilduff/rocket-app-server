@@ -1,7 +1,8 @@
-version: '3'
 services:
   api:
     image: your-docker-username/your-image-name:latest
+    build:
+      context: .
     environment:
       SECRET_KEY: ${SECRET_KEY}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
@@ -11,3 +12,11 @@ services:
       - ./database.sqlite:/rocket-app/database.sqlite
       - ./migrations:/rocket-app/migrations
 
+x-bake:
+  targets:
+    api:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SECRET_KEY: ${SECRET_KEY}
+        JWT_SECRET_KEY: ${JWT_SECRET_KEY}
