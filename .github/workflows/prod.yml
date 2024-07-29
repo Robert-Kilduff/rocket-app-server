@@ -99,6 +99,7 @@ jobs:
           script: |
             cd ~/rocket-app
             docker compose down
+            docker compose pull
             docker compose up -d
 
       - name: List running containers
