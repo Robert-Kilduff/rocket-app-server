@@ -1,6 +1,6 @@
 services:
   api:
-    image: your-docker-username/your-image-name:latest
+    image: robertkilduff/rocket-app:latest
     build:
       context: .
     environment:
