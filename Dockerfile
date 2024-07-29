@@ -21,7 +21,7 @@ COPY migrations ./migrations
 
 
 #listing files to check for Cargo.toml
-RUN echo "Files after copy rocket-app: " && ls -la /rocket-app
+RUN echo "Files in /rocket-app after copy:" && ls -la /rocket-app && ls -la /rocket-app/src && ls -la /rocket-app/migrations
 
 
 # Build the application
@@ -43,6 +43,10 @@ RUN echo "Current work dir is: $(pwd)"
 COPY --from=builder /rocket-app/target/release/rocket-app .
 COPY --from=builder /rocket-app/Cargo.toml .
 COPY --from=builder /rocket-app/Cargo.lock .
+COPY --from=builder /rocket-app/rocket.toml .
+COPY --from=builder /rocket-app/diesel.toml .
+COPY --from=builder /rocket-app/database.sqlite .
+COPY --from=builder /rocket-app/migrations ./migrations
 
 #Logging the files in the final stages
 RUN echo "files in rocket-app after copying from builder, final stage: " && ls -la /rocket-app

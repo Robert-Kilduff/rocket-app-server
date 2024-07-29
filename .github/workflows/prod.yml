@@ -18,9 +18,15 @@ jobs:
         with:
           profile: minimal
           toolchain: stable
-          
+
       - name: List files in build context
-        run: ls -la
+        run: |
+          echo "Listing root files:"
+          ls -la
+          echo "Listing src files:"
+          ls -la src
+          echo "Listing migrations files:"
+          ls -la migrations
 
       - name: Build and test code
         run: |
@@ -64,7 +70,8 @@ jobs:
           sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no Dockerfile root@${{ secrets.DROPLET_IP }}:~
           
       - name: List files in build context
-        run: ls -la
+        run:  sshpass -p "${{ secrets.DROPLET_PASSWORD }}" ssh -o StrictHostKeyChecking=no root@${{ secrets.DROPLET_IP }} "ls -la"
+
       
 
       - name: Deploy
@@ -76,7 +83,8 @@ jobs:
           script: |
             cd ~
             docker compose down
-            docker compose pull
+            docker compose build api
             docker compose up -d
       - name: List files in build context
-        run: ls -la
+        run: sshpass -p "${{ secrets.DROPLET_PASSWORD }}" ssh -o StrictHostKeyChecking=no root@${{ secrets.DROPLET_IP }} "docker ps"
+
