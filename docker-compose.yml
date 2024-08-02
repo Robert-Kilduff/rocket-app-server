@@ -1,22 +1,13 @@
+version: '3'
 services:
-  api:
-    image: robertkilduff/rocket-app:latest
-    build:
-      context: .
-    environment:
-      SECRET_KEY: ${SECRET_KEY}
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+  app:
+    build: .
     ports:
       - "8000:8000"
+    environment:
+      - DATABASE_URL=/rocket-app/database.sqlite
     volumes:
       - ./database.sqlite:/rocket-app/database.sqlite
       - ./migrations:/rocket-app/migrations
-
-x-bake:
-  targets:
-    api:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        SECRET_KEY: ${SECRET_KEY}
-        JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      - ./Rocket.toml:/rocket-app/Rocket.toml
+      - ./.env:/rocket-app/.env

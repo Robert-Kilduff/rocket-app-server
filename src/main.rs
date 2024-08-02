@@ -1,8 +1,13 @@
-#[macro_use] extern crate rocket;
+#[macro_use] 
+extern crate rocket;
+extern crate dotenv;
 
 use rocket::figment::{Figment, providers::{Format, Toml}};
 use rocket::serde::json::{json, Value};
 use rocket_sync_db_pools::database;
+use dotenv::dotenv;
+use std::env;
+use bcrypt::{hash, verify, DEFAULT_COST};
 
 use rocket::Config;
 
@@ -38,7 +43,26 @@ fn unprocessable_entity() -> Value {
 }
 #[rocket::main]
 async fn main() {
-    let figment = Figment::from(Config::default())
+    dotenv().ok();
+    let jwt_secret = env::var("JWT_SECRET_KEY")
+        .expect("JWT_SECRET_KEY must be set");
+    println!("JWT Secret: {}", jwt_secret);
+    for (key, value) in env::vars() {
+        println!("{}: {}", key, value);
+    }
+    let test_password = "password";
+    let hashed = match hash(test_password, DEFAULT_COST) {
+        Ok(h) => h,
+        Err(e) => panic!("Error hashing password: {}", e),
+    };
+    println!("Hashed password: {}", hashed);
+    match verify(test_password, &hashed) {
+        Ok(true) => println!("Password verified!"),
+        Ok(false) => println!("Password verification failed!"),
+        Err(e) => panic!("Error verifying password: {}", e),
+    }
+
+    let figment = Figment::from(rocket::Config::default())
     .merge(("address", "0.0.0.0"))
     .merge(("port", 8000))
     .merge(Toml::file("Rocket.toml").nested());

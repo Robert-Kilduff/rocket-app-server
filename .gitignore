@@ -13,3 +13,14 @@
 src/myapi/py_tests/__pycache__/server_call_tests.cpython-312.pyc
 src/myapi/py_tests/test_env.ipynb
 database.sqlite
+.env
+${DATABASE_URL}
+${DATABASE_URL}-shm
+${DATABASE_URL}-wal
+.DS_Store
+.DS_Store
+.DS_Store
+database.sqlite
+*.sqlite
+migrations/2024-04-28-132206_update_habit_index/down.sql
+migrations/2024-04-28-132206_update_habit_index/up.sql

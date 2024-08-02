@@ -5,6 +5,7 @@ use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey}
 use serde::{Serialize, Deserialize};
 use std::env;
 use bcrypt::{hash,DEFAULT_COST};
+use dotenv;
 
 use crate::models::NewUser;
 
